@@ -1,0 +1,131 @@
+<div style="margin:0;padding:0;background:#f6f7fb;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb;padding:24px 0;">
+        <tr>
+            <td align="center">
+
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+                    style="width:600px;max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.08);font-family:Arial, Helvetica, sans-serif;">
+
+                    <!-- TOP BAR (cor da marca) -->
+                    <tr>
+                        <td style="height:8px;background:#1f6fb7;line-height:8px;font-size:0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- HEADER -->
+                    <tr>
+                        <td style="padding:18px 24px 10px 24px;background:#ffffff;color:#111827;">
+
+                            <!-- LOGO + TITULO -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="vertical-align:middle;">
+                                        <!-- Troque a URL do logo abaixo pela do logo oficial (PNG preferencialmente) -->
+                                        <img src="https://i.imgur.com/8AtT4EC.png" alt="Multivac" height="26"
+                                            style="display:block;border:0;outline:none;text-decoration:none;">
+                                    </td>
+                                    <td align="right" style="vertical-align:middle;font-size:12px;color:#6b7280;">
+                                        Sistema de Orçamentos
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="margin-top:14px;font-size:18px;font-weight:700;line-height:1.2;">
+                                Orçamento {{ $('Separar Dados').item.json.cliente }}
+                            </div>
+
+                            <!-- BADGE EDITADA -->
+                            {{ $if(
+                            $('Separar Dados').item.json.isEdited,
+                            '<div
+                                style="margin-top:10px;display:inline-block;background:#1f6fb7;color:#ffffff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:0.2px;">
+                                ATUALIZADA</div>',
+                            ''
+                            ) }}
+
+                        </td>
+                    </tr>
+
+                    <!-- DIVIDER -->
+                    <tr>
+                        <td style="padding:0 24px;">
+                            <div style="height:1px;background:#e5e7eb;"></div>
+                        </td>
+                    </tr>
+
+                    <!-- BODY -->
+                    <tr>
+                        <td style="padding:18px 24px;color:#111827;">
+                            <div style="font-size:14px;line-height:1.6;">
+                                Olá,<br />
+                                Segue em anexo o orçamento do cliente <strong>{{ $('Separar Dados').item.json.cliente
+                                    }}</strong>.
+                            </div>
+
+                            <!-- RESUMO -->
+                            <div
+                                style="margin-top:16px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:14px;">
+                                <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Resumo</div>
+
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0"
+                                    style="font-size:13px;line-height:1.6;">
+                                    <tr>
+                                        <td style="padding:6px 0;color:#6b7280;width:38%;">Representante</td>
+                                        <td style="padding:6px 0;font-weight:700;">
+                                            {{ $('Separar Dados').item.json.representante }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding:6px 0;color:#6b7280;">Cliente</td>
+                                        <td style="padding:6px 0;font-weight:700;">
+                                            {{ $('Separar Dados').item.json.cliente }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding:6px 0;color:#6b7280;">Valor total</td>
+                                        <td style="padding:6px 0;font-weight:700;">
+                                            {{ $('Code para HTML').item.json.total }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding:6px 0;color:#6b7280;">Validade</td>
+                                        <td style="padding:6px 0;font-weight:700;">
+                                            {{ $('Separar Dados').item.json.validadeProposta }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- ANEXO -->
+                            <div style="margin-top:14px;font-size:13px;line-height:1.6;color:#111827;">
+                                📎 <strong>Arquivo em anexo:</strong>
+                                <span style="color:#6b7280;">
+
+                                </span>
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td
+                            style="padding:16px 24px;background:#ffffff;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;line-height:1.5;">
+                            Enviado automaticamente pelo sistema de orçamentos.<br />
+                            Gerado em: {{ $('Separar Dados').item.json.dataAtual }}
+                        </td>
+                    </tr>
+
+                    <!-- BOTTOM BAR (opcional, mesma cor da marca) -->
+                    <tr>
+                        <td style="height:6px;background:#1f6fb7;line-height:6px;font-size:0;">&nbsp;</td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</div>
