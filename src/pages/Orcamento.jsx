@@ -150,7 +150,6 @@ export default function OrcamentoMultivac() {
     telefone: useRef(null), cidade: useRef(null), estado: useRef(null), inscricaoEstadual: useRef(null),
     tipoVenda: useRef(null), formaPagamento: useRef(null), prazoEntrega: useRef(null),
     frete: useRef(null), transportadora: useRef(null), icms: useRef(null), desconto: useRef(null),
-    frete: useRef(null), transportadora: useRef(null), icms: useRef(null), desconto: useRef(null),
     emailCobranca: useRef(null), formaPagamentoDetalhe: useRef(null),
   }
   const itemRefs = useRef({})
