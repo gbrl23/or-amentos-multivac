@@ -695,15 +695,16 @@ export default function OrcamentoMultivac() {
       }
     }
 
+    let newBudgetId = null
+
     try {
       setEnviando(true); setRespostaN8n(null)
-
 
       // 1. Salvar no Supabase (histórico)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         // Sempre criar um novo registro no histórico para manter o versionamento (V1, V2...)
-        const { error: errSupabase } = await supabase.from('orcamentos').insert({
+        const { data: savedData, error: errSupabase } = await supabase.from('orcamentos').insert({
           user_id: user.id,
           cliente_nome: cliente.nome,
           cliente_empresa: cliente.empresa,
@@ -711,12 +712,12 @@ export default function OrcamentoMultivac() {
           valor_total: payload.valores.total,
           status: 'gerado', // status inicial
           payload: payload
-        })
+        }).select()
 
         if (errSupabase) {
           console.error('Erro ao salvar histórico:', errSupabase)
-          // Opcional: mostrar toast de erro específico do banco, mas não impedir o envio pro n8n se for o caso
-          // showToast('Erro ao salvar no histórico', 'error')
+        } else if (savedData && savedData[0]) {
+          newBudgetId = savedData[0].id
         }
       }
 
@@ -726,6 +727,17 @@ export default function OrcamentoMultivac() {
       showToast('Orçamento gerado com sucesso!', 'success')
     } catch (e) {
       console.error(e)
+
+      // Se falhou e tínhamos criado o registro, atualiza para erro
+      if (newBudgetId) {
+        try {
+          await supabase.from('orcamentos').update({ status: 'erro' }).eq('id', newBudgetId)
+          console.log('Status do orçamento atualizado para erro due to failure.')
+        } catch (updateErr) {
+          console.error('Falha ao atualizar status para erro:', updateErr)
+        }
+      }
+
       const msg = e instanceof Error ? e.message : String(e)
       showToast(`Erro ao gerar orçamento: ${msg}`, 'error')
     } finally { setEnviando(false) }
