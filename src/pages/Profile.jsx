@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { User, Mail, Lock, ArrowLeft, History, Loader2, CheckCircle, AlertCircle, Save, Edit2, X, Eye, FileText, Pencil } from 'lucide-react'
+import { User, Mail, Lock, ArrowLeft, History, Loader2, CheckCircle, AlertCircle, Save, Edit2, X, Eye, FileText, Pencil, Filter, Search } from 'lucide-react'
 
 export default function Profile() {
     const navigate = useNavigate()
@@ -24,6 +24,12 @@ export default function Profile() {
     const [selectedBudget, setSelectedBudget] = useState(null)
     const [loadingHistory, setLoadingHistory] = useState(true)
 
+    // Filters
+    const [filterStartDate, setFilterStartDate] = useState('')
+    const [filterEndDate, setFilterEndDate] = useState('')
+    const [filterClient, setFilterClient] = useState('')
+    const [filterRep, setFilterRep] = useState('')
+
     useEffect(() => {
         fetchUser()
         fetchHistory()
@@ -41,15 +47,52 @@ export default function Profile() {
 
     const fetchHistory = async () => {
         try {
-            const { data, error } = await supabase
+            setLoadingHistory(true)
+            let query = supabase
                 .from('orcamentos')
                 .select('*')
                 .order('created_at', { ascending: false })
+
+            if (filterStartDate) query = query.gte('created_at', `${filterStartDate}T00:00:00`)
+            if (filterEndDate) query = query.lte('created_at', `${filterEndDate}T23:59:59`)
+            if (filterClient) query = query.ilike('cliente_empresa', `%${filterClient}%`)
+            if (filterRep) query = query.ilike('payload->>representante', `%${filterRep}%`)
+
+            const { data, error } = await query
 
             if (error) throw error
             setBudgets(data || [])
         } catch (error) {
             console.error('Erro ao carregar histórico:', error)
+        } finally {
+            setLoadingHistory(false)
+        }
+    }
+
+    const clearFilters = () => {
+        setFilterStartDate('')
+        setFilterEndDate('')
+        setFilterClient('')
+        setFilterRep('')
+        // Precisamos chamar o fetch depois que limpar, mas como set é async, 
+        // melhor chamar direto passando vazio ou usar useEffect. 
+        // Simplificando: recarregar página ou forçar busca sem filtro manualmente
+        // Vou forçar a busca manual "limpa"
+        fetchHistoryWithoutFilters()
+    }
+
+    const fetchHistoryWithoutFilters = async () => {
+        // Versão auxiliar para limpar e buscar imediato (contornando closure state antigo)
+        try {
+            setLoadingHistory(true)
+            const { data, error } = await supabase
+                .from('orcamentos')
+                .select('*')
+                .order('created_at', { ascending: false })
+            if (error) throw error
+            setBudgets(data || [])
+        } catch (e) {
+            console.error(e)
         } finally {
             setLoadingHistory(false)
         }
@@ -257,7 +300,7 @@ export default function Profile() {
                     {/* History Section */}
                     <div className="md:col-span-2">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-2">
                                     <History className="text-[#0071b4]" size={24} />
                                     <h2 className="text-xl font-semibold text-gray-800">Histórico de Orçamentos</h2>
@@ -266,8 +309,66 @@ export default function Profile() {
                                     onClick={fetchHistory}
                                     className="text-sm text-[#0071b4] hover:underline"
                                 >
-                                    Atualizar
+                                    Atualizar Lista
                                 </button>
+                            </div>
+
+                            {/* Filters Bar */}
+                            <div className="p-4 bg-gray-50/50 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">De</label>
+                                    <input
+                                        type="date"
+                                        value={filterStartDate}
+                                        onChange={(e) => setFilterStartDate(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Até</label>
+                                    <input
+                                        type="date"
+                                        value={filterEndDate}
+                                        onChange={(e) => setFilterEndDate(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Cliente</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar cliente..."
+                                        value={filterClient}
+                                        onChange={(e) => setFilterClient(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 mb-1">Representante</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar representante..."
+                                        value={filterRep}
+                                        onChange={(e) => setFilterRep(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={fetchHistory}
+                                        className="flex-1 bg-[#0071b4] text-white py-2 rounded-lg text-sm font-medium hover:bg-[#005f9e] transition flex items-center justify-center gap-2"
+                                    >
+                                        <Filter size={16} />
+                                        Filtrar
+                                    </button>
+                                    <button
+                                        onClick={clearFilters}
+                                        className="px-3 bg-white border border-gray-300 text-gray-600 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                                        title="Limpar filtros"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto">

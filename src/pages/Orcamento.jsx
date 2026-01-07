@@ -639,6 +639,13 @@ export default function OrcamentoMultivac() {
   }
 
   const gerarOrcamento = async () => {
+    // Validação de configuração
+    if (!N8N_GATEWAY_URL) {
+      showToast('Erro de configuração: URL do servidor de orçamentos não encontrada.', 'error')
+      console.error('VITE_N8N_GATEWAY_URL não está definida no ambiente.')
+      return
+    }
+
     let obsAdicionais = ''
     if (comercial.formaPagamento === 'Outros' && comercial.formaPagamentoDetalhe) {
       obsAdicionais += `\nForma de Pagamento: ${comercial.formaPagamentoDetalhe}`
@@ -718,7 +725,9 @@ export default function OrcamentoMultivac() {
       setRespostaN8n(data)
       showToast('Orçamento gerado com sucesso!', 'success')
     } catch (e) {
-      console.error(e); showToast('Erro ao gerar orçamento no servidor. Tente novamente.', 'error')
+      console.error(e)
+      const msg = e instanceof Error ? e.message : String(e)
+      showToast(`Erro ao gerar orçamento: ${msg}`, 'error')
     } finally { setEnviando(false) }
   }
 
