@@ -27,6 +27,7 @@ export default function Profile() {
     // Filters
     const [filterStartDate, setFilterStartDate] = useState('')
     const [filterEndDate, setFilterEndDate] = useState('')
+    const [isSingleDate, setIsSingleDate] = useState(false)
     const [filterClient, setFilterClient] = useState('')
     const [filterRep, setFilterRep] = useState('')
 
@@ -53,8 +54,15 @@ export default function Profile() {
                 .select('*')
                 .order('created_at', { ascending: false })
 
-            if (filterStartDate) query = query.gte('created_at', `${filterStartDate}T00:00:00`)
-            if (filterEndDate) query = query.lte('created_at', `${filterEndDate}T23:59:59`)
+            if (isSingleDate && filterStartDate) {
+                // Se for data única, usamos a mesma data para início e fim do dia
+                query = query.gte('created_at', `${filterStartDate}T00:00:00`)
+                query = query.lte('created_at', `${filterStartDate}T23:59:59`)
+            } else {
+                if (filterStartDate) query = query.gte('created_at', `${filterStartDate}T00:00:00`)
+                if (filterEndDate) query = query.lte('created_at', `${filterEndDate}T23:59:59`)
+            }
+
             if (filterClient) query = query.ilike('cliente_empresa', `%${filterClient}%`)
             if (filterRep) query = query.ilike('payload->>representante', `%${filterRep}%`)
 
@@ -74,10 +82,7 @@ export default function Profile() {
         setFilterEndDate('')
         setFilterClient('')
         setFilterRep('')
-        // Precisamos chamar o fetch depois que limpar, mas como set é async, 
-        // melhor chamar direto passando vazio ou usar useEffect. 
-        // Simplificando: recarregar página ou forçar busca sem filtro manualmente
-        // Vou forçar a busca manual "limpa"
+        setIsSingleDate(false)
         fetchHistoryWithoutFilters()
     }
 
@@ -315,24 +320,51 @@ export default function Profile() {
 
                             {/* Filters Bar */}
                             <div className="p-4 bg-gray-50/50 border-b border-gray-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">De</label>
+                                <div className="flex items-center gap-2 mb-2 sm:mb-0 lg:col-span-5">
                                     <input
-                                        type="date"
-                                        value={filterStartDate}
-                                        onChange={(e) => setFilterStartDate(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                        type="checkbox"
+                                        id="singleDate"
+                                        checked={isSingleDate}
+                                        onChange={(e) => setIsSingleDate(e.target.checked)}
+                                        className="rounded border-gray-300 text-[#0071b4] focus:ring-[#0071b4]"
                                     />
+                                    <label htmlFor="singleDate" className="text-sm text-gray-700 select-none">
+                                        Data Única
+                                    </label>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Até</label>
-                                    <input
-                                        type="date"
-                                        value={filterEndDate}
-                                        onChange={(e) => setFilterEndDate(e.target.value)}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
-                                    />
-                                </div>
+
+                                {isSingleDate ? (
+                                    <div className="lg:col-span-2">
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Data</label>
+                                        <input
+                                            type="date"
+                                            value={filterStartDate}
+                                            onChange={(e) => setFilterStartDate(e.target.value)}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                        />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">De</label>
+                                            <input
+                                                type="date"
+                                                value={filterStartDate}
+                                                onChange={(e) => setFilterStartDate(e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">Até</label>
+                                            <input
+                                                type="date"
+                                                value={filterEndDate}
+                                                onChange={(e) => setFilterEndDate(e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                                            />
+                                        </div>
+                                    </>
+                                )}
                                 <div>
                                     <label className="block text-xs font-medium text-gray-700 mb-1">Cliente</label>
                                     <input
