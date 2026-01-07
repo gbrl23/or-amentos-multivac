@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { User, Mail, Lock, ArrowLeft, History, Loader2, CheckCircle, AlertCircle, Save, Edit2, X, Eye, FileText, Pencil, Filter, Search } from 'lucide-react'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
+import { ptBR } from 'date-fns/locale'
+
+registerLocale('pt-BR', ptBR)
 
 export default function Profile() {
     const navigate = useNavigate()
@@ -336,10 +341,21 @@ export default function Profile() {
                                 {isSingleDate ? (
                                     <div className="lg:col-span-2">
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Data</label>
-                                        <input
-                                            type="date"
-                                            value={filterStartDate}
-                                            onChange={(e) => setFilterStartDate(e.target.value)}
+                                        <DatePicker
+                                            selected={filterStartDate ? new Date(filterStartDate + 'T12:00:00') : null}
+                                            onChange={(date) => {
+                                                if (!date) { setFilterStartDate(''); return }
+                                                const y = date.getFullYear()
+                                                const m = String(date.getMonth() + 1).padStart(2, '0')
+                                                const d = String(date.getDate()).padStart(2, '0')
+                                                setFilterStartDate(`${y}-${m}-${d}`)
+                                            }}
+                                            dateFormat="dd/MM/yyyy"
+                                            locale="pt-BR"
+                                            showMonthDropdown
+                                            showYearDropdown
+                                            dropdownMode="select"
+                                            placeholderText="Selecione..."
                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
                                         />
                                     </div>
@@ -347,19 +363,41 @@ export default function Profile() {
                                     <>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">De</label>
-                                            <input
-                                                type="date"
-                                                value={filterStartDate}
-                                                onChange={(e) => setFilterStartDate(e.target.value)}
+                                            <DatePicker
+                                                selected={filterStartDate ? new Date(filterStartDate + 'T12:00:00') : null}
+                                                onChange={(date) => {
+                                                    if (!date) { setFilterStartDate(''); return }
+                                                    const y = date.getFullYear()
+                                                    const m = String(date.getMonth() + 1).padStart(2, '0')
+                                                    const d = String(date.getDate()).padStart(2, '0')
+                                                    setFilterStartDate(`${y}-${m}-${d}`)
+                                                }}
+                                                dateFormat="dd/MM/yyyy"
+                                                locale="pt-BR"
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                dropdownMode="select"
+                                                placeholderText="Início"
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Até</label>
-                                            <input
-                                                type="date"
-                                                value={filterEndDate}
-                                                onChange={(e) => setFilterEndDate(e.target.value)}
+                                            <DatePicker
+                                                selected={filterEndDate ? new Date(filterEndDate + 'T12:00:00') : null}
+                                                onChange={(date) => {
+                                                    if (!date) { setFilterEndDate(''); return }
+                                                    const y = date.getFullYear()
+                                                    const m = String(date.getMonth() + 1).padStart(2, '0')
+                                                    const d = String(date.getDate()).padStart(2, '0')
+                                                    setFilterEndDate(`${y}-${m}-${d}`)
+                                                }}
+                                                dateFormat="dd/MM/yyyy"
+                                                locale="pt-BR"
+                                                showMonthDropdown
+                                                showYearDropdown
+                                                dropdownMode="select"
+                                                placeholderText="Fim"
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
                                             />
                                         </div>
