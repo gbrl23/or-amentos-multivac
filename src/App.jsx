@@ -5,9 +5,11 @@ import { supabase } from './supabaseClient'
 import AuthMultivac from './Auth.jsx'
 import Orcamento from './pages/Orcamento.jsx'
 import Profile from './pages/Profile.jsx'
+import ManageUsers from './pages/ManageUsers.jsx'
+import UpdatePasswordModal from './components/UpdatePasswordModal.jsx' // [NEW]
 
 // Rota protegida + controle de sessão + timeout de inatividade
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, setPasswordModal }) {
   const [status, setStatus] = useState('checking') // 'checking' | 'in' | 'out'
   const location = useLocation()
   const navigate = useNavigate()
@@ -20,19 +22,34 @@ function ProtectedRoute({ children }) {
       const { data } = await supabase.auth.getSession()
       if (!mounted) return
       setStatus(data?.session ? 'in' : 'out')
+
+      // Check for forced password change on initial load
+      if (data?.session?.user?.user_metadata?.force_password_change) {
+        setPasswordModal({ open: true, isRecovery: false })
+      }
     }
     check()
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
       setStatus(session ? 'in' : 'out')
+
+      // [NEW] Handle Password Recovery Event
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordModal({ open: true, isRecovery: true })
+      }
+
+      // [NEW] Handle First Login (Force Password Change)
+      if (event === 'SIGNED_IN' && session?.user?.user_metadata?.force_password_change) {
+        setPasswordModal({ open: true, isRecovery: false })
+      }
     })
 
     return () => {
       mounted = false
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [setPasswordModal])
 
   // 2. Timeout de inatividade (só se o usuário NÃO marcou "Manter conectado")
   useEffect(() => {
@@ -106,33 +123,53 @@ function ProtectedRoute({ children }) {
 
 // Rotas principais
 export default function App() {
+  const [passwordModal, setPasswordModal] = useState({ open: false, isRecovery: false })
+
   return (
-    <Routes>
-      {/* Tela de login/cadastro/recuperação */}
-      <Route path="/" element={<AuthMultivac />} />
+    <>
+      <Routes>
+        {/* Tela de login/cadastro/recuperação */}
+        <Route path="/" element={<AuthMultivac />} />
 
-      {/* Tela de orçamento protegida */}
-      <Route
-        path="/orcamentos"
-        element={
-          <ProtectedRoute>
-            <Orcamento />
-          </ProtectedRoute>
-        }
+        {/* Tela de orçamento protegida */}
+        <Route
+          path="/orcamentos"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <Orcamento />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tela de perfil protegida */}
+        <Route
+          path="/perfil"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tela de gestão de usuários (Acesso interno verifica Admin) */}
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <ManageUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* fallback: qualquer rota desconhecida volta pro login */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      <UpdatePasswordModal
+        isOpen={passwordModal.open}
+        onClose={() => setPasswordModal({ ...passwordModal, open: false })}
+        isRecovery={passwordModal.isRecovery}
       />
-
-      {/* Tela de perfil protegida */}
-      <Route
-        path="/perfil"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* fallback: qualquer rota desconhecida volta pro login */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    </>
   )
 }

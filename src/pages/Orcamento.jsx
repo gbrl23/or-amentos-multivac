@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react'
-import { Trash2, Plus, Search, Loader2, CheckCircle, AlertCircle, LogOut, XCircle, User, ChevronDown } from 'lucide-react'
+import { Trash2, Plus, Search, Loader2, CheckCircle, AlertCircle, LogOut, XCircle, User, ChevronDown, UserPlus } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
@@ -135,7 +135,6 @@ export default function OrcamentoMultivac() {
   const [showSetupModal, setShowSetupModal] = useState(false)
   const [setupName, setSetupName] = useState('')
   const [setupPassword, setSetupPassword] = useState('')
-  const [setupConfirm, setSetupConfirm] = useState('')
   const [setupLoading, setSetupLoading] = useState(false)
 
   // Validação (erros)
@@ -186,13 +185,18 @@ export default function OrcamentoMultivac() {
     window.addEventListener('keydown', onKey)
     return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize); window.removeEventListener('keydown', onKey) }
   }, [showConfirm, computePopoverPos])
+
   // Auth + nome user
+  const [userRole, setUserRole] = useState(null)
+
   useEffect(() => {
     ; (async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return navigate('/', { replace: true })
       const user = session.user
       const nome = user.user_metadata?.full_name || user.user_metadata?.name
+
+      setUserRole(user.user_metadata?.role)
 
       if (nome) {
         setRepresentante(nome)
@@ -815,6 +819,16 @@ export default function OrcamentoMultivac() {
             <p className="text-sm opacity-90">Sistema de Orçamentos</p>
           </div>
           <div className="flex items-center gap-4">
+            {userRole === 'admin' && (
+              <button
+                onClick={() => navigate('/usuarios')}
+                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-white/20"
+                title="Gerenciar Usuários"
+              >
+                <UserPlus size={16} />
+                <span className="hidden sm:inline">Convidar Usuário</span>
+              </button>
+            )}
             <div className="text-right relative">
               <p className="text-sm opacity-90">Representante</p>
               <button
