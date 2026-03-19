@@ -18,10 +18,14 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [userMetadata, setUserMetadata] = useState(null);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setUserMetadata(data.user.user_metadata);
+      if (data?.user) {
+        setUserMetadata(data.user.user_metadata);
+        setUserEmail(data.user.email);
+      }
     });
   }, []);
 
@@ -41,7 +45,7 @@ export default function DashboardLayout() {
 
   // Filtramos os itens duplicados de teste acima:
   const finalMenuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Resumo / Home' },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/orcamentos', icon: FileText, label: 'Painel de Orçamentos' },
     { path: '/dashboard/catalogo', icon: Package, label: 'Catálogo de Produtos' },
     { path: '/dashboard/catalogo/upload', icon: Upload, label: 'Importar Lote CSV' },
@@ -85,10 +89,12 @@ export default function DashboardLayout() {
           <div className="flex items-center justify-between group cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition" onClick={() => navigate('/perfil')}>
              <div className="flex items-center gap-3">
                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-100 to-[#0071b4]/20 flex items-center justify-center text-[#0071b4] font-bold text-sm shadow-sm ring-1 ring-white">
-                 {userMetadata?.name?.charAt(0) || 'U'}
+                 {(userMetadata?.name || userMetadata?.full_name || userEmail || 'U').charAt(0).toUpperCase()}
                </div>
                <div className="flex flex-col">
-                 <span className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">{userMetadata?.name || 'Administrador'}</span>
+                 <span className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">
+                   {userMetadata?.name || userMetadata?.full_name || userEmail?.split('@')[0] || 'Usuário'}
+                 </span>
                  <span className="text-xs text-gray-500 capitalize">{userMetadata?.role || 'Admin'}</span>
                </div>
              </div>
