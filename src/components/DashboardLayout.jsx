@@ -58,11 +58,7 @@ export default function DashboardLayout() {
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 left-0 z-20 shadow-sm">
         {/* Logo Area */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
-          <div className="w-8 h-8 bg-blue-50 text-[#0071b4] rounded-lg flex items-center justify-center font-bold mr-3 shadow-inner">
-            M
-          </div>
-          <span className="text-xl font-bold tracking-tight text-gray-900">Multivac</span>
-          <span className="ml-2 text-[10px] font-bold bg-blue-100 text-[#0071b4] px-1.5 py-0.5 rounded uppercase tracking-wider">Pro</span>
+          <img src="https://i.imgur.com/8AtT4EC.png" alt="Multivac" className="h-9 w-auto object-contain" />
         </div>
 
         {/* Navigation */}
