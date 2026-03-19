@@ -34,7 +34,8 @@ serve(async (req) => {
                 full_name: name,
                 role: role || 'representative',
                 force_password_change: true
-            }
+            },
+            redirectTo: 'https://vh.api.br'
         })
 
         if (error) {
