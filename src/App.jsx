@@ -7,10 +7,11 @@ import Orcamento from './pages/Orcamento.jsx'
 import Profile from './pages/Profile.jsx'
 import ManageUsers from './pages/ManageUsers.jsx'
 
-import AdminDashboard from './pages/AdminDashboard.jsx' // [NEW]
-import UpdatePasswordModal from './components/UpdatePasswordModal.jsx' // [NEW]
+import AdminDashboard from './pages/AdminDashboard.jsx'
+import UpdatePasswordModal from './components/UpdatePasswordModal.jsx'
 import CatalogManager from './pages/CatalogManager.jsx'
 import CatalogUpload from './pages/CatalogUpload.jsx'
+import DashboardLayout from './components/DashboardLayout.jsx' // [NEW]
 
 // Rota protegida + controle de sessão + timeout de inatividade
 function ProtectedRoute({ children, setPasswordModal }) {
@@ -135,7 +136,8 @@ export default function App() {
         {/* Tela de login/cadastro/recuperação */}
         <Route path="/" element={<AuthMultivac />} />
 
-        {/* Tela de orçamento protegida */}
+        {/* -- Rotas Antigas e Genéricas -- */}
+        {/* Tela de orçamento (podemos mante-la avulsa se não quisermos afetar o app core) */}
         <Route
           path="/orcamentos"
           element={
@@ -145,55 +147,29 @@ export default function App() {
           }
         />
 
-        {/* Tela de perfil protegida */}
+        {/* -- HUB DO PAINEL ADMIN COM SIDEBAR -- */}
         <Route
-          path="/perfil"
           element={
             <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <Profile />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Tela de perfil */}
+          <Route path="/perfil" element={<Profile />} />
 
-        {/* Tela de gestão de usuários (Acesso interno verifica Admin) */}
-        <Route
-          path="/usuarios"
-          element={
-            <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <ManageUsers />
-            </ProtectedRoute>
-          }
-        />
+          {/* Tela de gestão de usuários */}
+          <Route path="/usuarios" element={<ManageUsers />} />
 
-        {/* Dashboard Admin */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+          {/* Dashboard Admin (Resumo) */}
+          <Route path="/dashboard" element={<AdminDashboard />} />
 
-        {/* Gestão de Catálogo (Admin) */}
-        <Route
-          path="/dashboard/catalogo"
-          element={
-            <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <CatalogManager />
-            </ProtectedRoute>
-          }
-        />
+          {/* Gestão de Catálogo */}
+          <Route path="/dashboard/catalogo" element={<CatalogManager />} />
 
-        {/* Upload de Catálogo (Admin) */}
-        <Route
-          path="/dashboard/catalogo/upload"
-          element={
-            <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <CatalogUpload />
-            </ProtectedRoute>
-          }
-        />
+          {/* Upload de Catálogo */}
+          <Route path="/dashboard/catalogo/upload" element={<CatalogUpload />} />
+        </Route>
 
         {/* fallback: qualquer rota desconhecida volta pro login */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -128,21 +128,8 @@ export default function CatalogUpload() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl mx-auto rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[50vh] overflow-hidden relative bg-white pb-10">
-        
-        {/* HEADER EXTRA - VOLTAR */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center mb-6">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-gray-500 hover:text-[#0071b4] font-medium transition"
-          >
-            <ChevronLeft size={20} />
-            Voltar ao Dashboard
-          </button>
-        </div>
-
-        <div className="px-8">
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[50vh] overflow-hidden relative pb-10">
+        <div className="px-8 mt-8">
           <style>{css}</style>
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -292,7 +279,6 @@ export default function CatalogUpload() {
         </div>
       )}
         </div>
-      </div>
     </div>
   );
 }

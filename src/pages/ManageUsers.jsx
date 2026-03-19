@@ -88,17 +88,9 @@ export default function ManageUsers() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-3xl mx-auto">
-                <button
-                    onClick={() => navigate('/orcamentos')}
-                    className="flex items-center gap-2 text-gray-600 hover:text-[#0071b4] mb-6 transition"
-                >
-                    <ArrowLeft size={20} />
-                    Voltar para Orçamentos
-                </button>
-
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className="w-full">
+            <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-6">
                         <div className="bg-blue-100 p-3 rounded-full text-[#0071b4]">
                             <UserPlus size={32} />

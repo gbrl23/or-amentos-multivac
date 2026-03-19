@@ -140,22 +140,10 @@ export default function CatalogManager() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-7xl mx-auto rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[90vh] overflow-hidden relative bg-white">
-        
-        {/* HEADER EXTRA - VOLTAR */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-gray-500 hover:text-[#0071b4] font-medium transition"
-          >
-            <ChevronLeft size={20} />
-            Voltar ao Dashboard
-          </button>
-        </div>
-
-        {/* HEADER TELA COMPONENTE */}
-        <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white z-10 shrink-0">
+    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[85vh] overflow-hidden relative">
+      
+      {/* HEADER TELA COMPONENTE */}
+      <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white z-10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-50 text-[#0071b4] rounded-xl flex items-center justify-center">
             <Package size={20} />
@@ -436,8 +424,6 @@ export default function CatalogManager() {
           </div>
         </>
       )}
-
-      </div>
     </div>
   );
 }
