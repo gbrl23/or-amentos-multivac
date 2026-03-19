@@ -9,6 +9,8 @@ import ManageUsers from './pages/ManageUsers.jsx'
 
 import AdminDashboard from './pages/AdminDashboard.jsx' // [NEW]
 import UpdatePasswordModal from './components/UpdatePasswordModal.jsx' // [NEW]
+import CatalogManager from './pages/CatalogManager.jsx'
+import CatalogUpload from './pages/CatalogUpload.jsx'
 
 // Rota protegida + controle de sessão + timeout de inatividade
 function ProtectedRoute({ children, setPasswordModal }) {
@@ -169,6 +171,26 @@ export default function App() {
           element={
             <ProtectedRoute setPasswordModal={setPasswordModal}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Gestão de Catálogo (Admin) */}
+        <Route
+          path="/dashboard/catalogo"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <CatalogManager />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Upload de Catálogo (Admin) */}
+        <Route
+          path="/dashboard/catalogo/upload"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <CatalogUpload />
             </ProtectedRoute>
           }
         />

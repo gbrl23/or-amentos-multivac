@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import { supabase } from "../supabaseClient";
+import { ChevronLeft } from 'lucide-react';
 
 // ─── Colunas esperadas no CSV ────────────────────────────────────────────────
 const EXPECTED_COLUMNS = [
@@ -50,6 +52,8 @@ export default function CatalogUpload() {
   const [dragOver, setDragOver] = useState(false);
   const [filter, setFilter] = useState("");
   const fileRef = useRef();
+
+  const navigate = useNavigate();
 
   const handleFile = useCallback((file) => {
     if (!file || !file.name.endsWith(".csv")) {
@@ -124,10 +128,30 @@ export default function CatalogUpload() {
   );
 
   return (
-    <div>
-      <style>{css}</style>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl mx-auto rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[50vh] overflow-hidden relative bg-white pb-10">
+        
+        {/* HEADER EXTRA - VOLTAR */}
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 text-gray-500 hover:text-[#0071b4] font-medium transition"
+          >
+            <ChevronLeft size={20} />
+            Voltar ao Dashboard
+          </button>
+        </div>
 
-      {/* ── IDLE: Drop Zone ── */}
+        <div className="px-8">
+          <style>{css}</style>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Importação em Lote (CSV)</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Atualização massiva · Tabela <code className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">lista_produtos</code></p>
+            </div>
+          </div>
+
+          {/* ── IDLE: Drop Zone ── */}
       {stage === "idle" && (
         <div
           style={{ ...styles.dropzone, ...(dragOver ? styles.dropzoneActive : {}) }}
@@ -267,6 +291,8 @@ export default function CatalogUpload() {
           </button>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

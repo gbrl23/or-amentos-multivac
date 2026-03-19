@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import CatalogUpload from './CatalogUpload'
-import CatalogManager from './CatalogManager'
 import {
     Users,
     FileText,
@@ -18,7 +16,6 @@ import {
     Shield,
     LogOut,
     ChevronDown,
-    ChevronUp,
     User,
     LifeBuoy,
     Upload,
@@ -42,8 +39,6 @@ export default function AdminDashboard() {
     const [inviteMessage, setInviteMessage] = useState({ type: null, text: '' })
     const [userName, setUserName] = useState('')
     const [menuOpen, setMenuOpen] = useState(false)
-    const [showCatalog, setShowCatalog] = useState(false)
-    const [showCatalogManager, setShowCatalogManager] = useState(false)
 
     useEffect(() => {
         checkAdminAndFetchStats()
@@ -343,14 +338,14 @@ export default function AdminDashboard() {
                                     <span className="font-medium">Ver Histórico Completo</span>
                                     <ArrowRight size={16} className="text-gray-400 group-hover:text-[#0071b4]" />
                                 </button>
-                                <button onClick={() => { setShowCatalog(!showCatalog); setShowCatalogManager(false) }} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition group text-left">
+                                <button onClick={() => navigate('/dashboard/catalogo/upload')} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition group text-left">
                                     <span className="font-medium flex items-center gap-2">
                                         <Upload size={16} className="text-[#0071b4]" />
                                         Importar via CSV
                                     </span>
                                     <ArrowRight size={16} className="text-gray-400 group-hover:text-[#0071b4]" />
                                 </button>
-                                <button onClick={() => { setShowCatalogManager(!showCatalogManager); setShowCatalog(false) }} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition group text-left">
+                                <button onClick={() => navigate('/dashboard/catalogo')} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 text-gray-700 transition group text-left">
                                     <span className="font-medium flex items-center gap-2">
                                         <PackageSearch size={16} className="text-[#0071b4]" />
                                         Gestão do Catálogo
@@ -359,52 +354,8 @@ export default function AdminDashboard() {
                                 </button>
                             </nav>
                         </div>
-
-
                     </div>
-
                 </div>
-
-                {/* Catalog Upload Section */}
-                {showCatalog && (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-100 text-[#0071b4] rounded-lg">
-                                    <Database size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Importação em Lote (CSV)</h3>
-                                    <p className="text-sm text-gray-500 mt-0.5">Atualização massiva · Tabela <code className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">lista_produtos</code></p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowCatalog(false)}
-                                className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-50 rounded-lg"
-                                title="Fechar"
-                            >
-                                <ChevronUp size={20} />
-                            </button>
-                        </div>
-                        <CatalogUpload />
-                    </div>
-                )}
-
-                {/* Catalog Manager Section */}
-                {showCatalogManager && (
-                    <div className="mt-8 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <div className="flex justify-end mb-4 pr-2">
-                             <button
-                                onClick={() => setShowCatalogManager(false)}
-                                className="text-gray-500 hover:text-gray-900 font-medium transition flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50"
-                            >
-                                Fechar Gestor
-                                <ChevronUp size={16} />
-                            </button>
-                        </div>
-                        <CatalogManager />
-                    </div>
-                )}
             </div>
 
             {/* Support Floating Button */}
