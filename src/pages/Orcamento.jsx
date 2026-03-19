@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react'
-import { Trash2, Plus, Search, Loader2, CheckCircle, AlertCircle, LogOut, XCircle, User, ChevronDown, UserPlus } from 'lucide-react'
+import { Trash2, Plus, Search, Loader2, CheckCircle, AlertCircle, LogOut, XCircle, User, ChevronDown, UserPlus, ArrowLeft } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 
@@ -87,6 +87,7 @@ export default function OrcamentoMultivac() {
   // Edição
   const [editMode, setEditMode] = useState(false)
   const [budgetToUpdate, setBudgetToUpdate] = useState(null)
+  const [previousStatus, setPreviousStatus] = useState(null) // NEW: track previous status for versioning logic
   // Versionamento
   const [version, setVersion] = useState(1)
 
@@ -135,6 +136,7 @@ export default function OrcamentoMultivac() {
   const [showSetupModal, setShowSetupModal] = useState(false)
   const [setupName, setSetupName] = useState('')
   const [setupPassword, setSetupPassword] = useState('')
+  const [setupConfirm, setSetupConfirm] = useState('')
   const [setupLoading, setSetupLoading] = useState(false)
 
   // Validação (erros)
@@ -364,6 +366,7 @@ export default function OrcamentoMultivac() {
 
       setEditMode(true)
       setBudgetToUpdate(budgetData)
+      setPreviousStatus(budgetData.status) // Capture status
 
       if (payload.cliente) setCliente(payload.cliente)
 
@@ -661,8 +664,11 @@ export default function OrcamentoMultivac() {
     }
 
     // Calcular nova versão
+    // Se o status anterior era 'erro', mantemos a mesma versão (retry).
+    // Caso contrário (sucesso ou null), incrementamos.
     const currentVer = editMode ? (version || 1) : 0
-    const nextVer = currentVer + 1
+    const shouldIncrement = previousStatus !== 'erro'
+    const nextVer = shouldIncrement ? currentVer + 1 : currentVer
 
     const payload = {
       isEdited: editMode,
@@ -707,16 +713,38 @@ export default function OrcamentoMultivac() {
       // 1. Salvar no Supabase (histórico)
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // Sempre criar um novo registro no histórico para manter o versionamento (V1, V2...)
-        const { data: savedData, error: errSupabase } = await supabase.from('orcamentos').insert({
-          user_id: user.id,
-          cliente_nome: cliente.nome,
-          cliente_empresa: cliente.empresa,
-          cliente_cnpj: cliente.cnpj,
-          valor_total: payload.valores.total,
-          status: 'gerado', // status inicial
-          payload: payload
-        }).select()
+        let savedData, errSupabase
+
+        // CHECK: Se for edição de um orçamento que deu ERRO, atualizamos o mesmo registro (Retry)
+        if (editMode && previousStatus === 'erro' && budgetToUpdate?.id) {
+          newBudgetId = budgetToUpdate.id // Reuse ID
+          const { data, error } = await supabase.from('orcamentos').update({
+            user_id: user.id, // Ensure ownership
+            cliente_nome: cliente.nome,
+            cliente_empresa: cliente.empresa,
+            cliente_cnpj: cliente.cnpj,
+            valor_total: payload.valores.total,
+            status: 'gerado', // Reset status to success
+            payload: payload,
+            created_at: new Date().toISOString() // Update timestamp to now
+          }).eq('id', newBudgetId).select()
+
+          savedData = data
+          errSupabase = error
+        } else {
+          // Caso padrão: Insert new record (History V1, V2...)
+          const { data, error } = await supabase.from('orcamentos').insert({
+            user_id: user.id,
+            cliente_nome: cliente.nome,
+            cliente_empresa: cliente.empresa,
+            cliente_cnpj: cliente.cnpj,
+            valor_total: payload.valores.total,
+            status: 'gerado', // status inicial
+            payload: payload
+          }).select()
+          savedData = data
+          errSupabase = error
+        }
 
         if (errSupabase) {
           console.error('Erro ao salvar histórico:', errSupabase)
@@ -820,14 +848,24 @@ export default function OrcamentoMultivac() {
           </div>
           <div className="flex items-center gap-4">
             {userRole === 'admin' && (
-              <button
-                onClick={() => navigate('/usuarios')}
-                className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-white/20"
-                title="Gerenciar Usuários"
-              >
-                <UserPlus size={16} />
-                <span className="hidden sm:inline">Convidar Usuário</span>
-              </button>
+              <>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-white/20 mr-2"
+                  title="Voltar ao Dashboard"
+                >
+                  <ArrowLeft size={16} />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </button>
+                <button
+                  onClick={() => navigate('/usuarios')}
+                  className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition border border-white/20"
+                  title="Gerenciar Usuários"
+                >
+                  <UserPlus size={16} />
+                  <span className="hidden sm:inline">Convidar Usuário</span>
+                </button>
+              </>
             )}
             <div className="text-right relative">
               <p className="text-sm opacity-90">Representante</p>
@@ -1396,7 +1434,7 @@ export default function OrcamentoMultivac() {
               style={{ backgroundColor: '#0071b4' }}
               disabled={enviando}
             >
-              {editMode ? 'Salvar Alterações' : 'Gerar Orçamento'}
+              {editMode ? (previousStatus === 'erro' ? 'Tentar Novamente' : 'Salvar Alterações') : 'Gerar Orçamento'}
             </button>
           </div>
         </div>
@@ -1439,7 +1477,7 @@ export default function OrcamentoMultivac() {
                       className="px-4 py-2 rounded-lg font-semibold text-white shadow hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                       style={{ backgroundColor: '#0071b4' }}>
                       {enviando && <Loader2 className="animate-spin" size={18} />}
-                      {enviando ? 'Enviando...' : (editMode ? 'Confirmar Edição' : 'Confirmar envio')}
+                      {enviando ? 'Enviando...' : (editMode ? (previousStatus === 'erro' ? 'Confirmar Reenvio' : 'Confirmar Edição') : 'Confirmar envio')}
                     </button>
                   </div>
                 </div>

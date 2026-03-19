@@ -34,14 +34,16 @@ export default function AuthMultivac() {
     const boot = async () => {
       const { data } = await supabase.auth.getSession()
       if (data?.session) {
-        navigate('/orcamentos', { replace: true })
+        const role = data.session.user?.user_metadata?.role
+        navigate(role === 'admin' ? '/dashboard' : '/orcamentos', { replace: true })
       }
     }
     boot()
 
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (session) {
-        navigate('/orcamentos', { replace: true })
+        const role = session.user?.user_metadata?.role
+        navigate(role === 'admin' ? '/dashboard' : '/orcamentos', { replace: true })
       }
     })
 
@@ -78,9 +80,11 @@ export default function AuthMultivac() {
       })
       if (error) throw error
 
-      if (error) throw error
+      const { data: { user } } = await supabase.auth.getUser()
+      const role = user?.user_metadata?.role
+
       mostrarMensagem('sucesso', 'Login realizado com sucesso!')
-      navigate('/orcamentos', { replace: true })
+      navigate(role === 'admin' ? '/dashboard' : '/orcamentos', { replace: true })
     } catch (err) {
       console.error('[login]', err)
       mostrarMensagem('erro', err.message || 'Falha ao entrar')

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { User, Mail, Lock, ArrowLeft, History, Loader2, CheckCircle, AlertCircle, Save, Edit2, X, Eye, FileText, Pencil, Filter, Search } from 'lucide-react'
+import { User, Mail, Lock, ArrowLeft, History, Loader2, CheckCircle, AlertCircle, Save, Edit2, X, Eye, FileText, Pencil, Filter, Search, RotateCcw, Trash2 } from 'lucide-react'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { ptBR } from 'date-fns/locale'
@@ -154,6 +154,29 @@ export default function Profile() {
 
     const handleEditBudget = (budget) => {
         navigate('/orcamentos', { state: { editMode: true, budgetData: budget } })
+    }
+
+    const handleDeleteBudget = async (budget) => {
+        if (!window.confirm('Tem certeza que deseja excluir esta tentativa falha?')) return
+
+        try {
+            setLoadingHistory(true)
+            const { error } = await supabase
+                .from('orcamentos')
+                .delete()
+                .eq('id', budget.id)
+                .eq('status', 'erro') // Extra safety check
+
+            if (error) throw error
+
+            showMessage('success', 'Tentativa excluída com sucesso.')
+            fetchHistory() // Refresh list
+        } catch (error) {
+            console.error('Erro ao excluir:', error)
+            showMessage('error', 'Erro ao excluir item.')
+        } finally {
+            setLoadingHistory(false)
+        }
     }
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -478,7 +501,7 @@ export default function Profile() {
                                                         {formatCurrency(b.valor_total)}
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 capitalize">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${b.status === 'erro' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                                                             {b.status || 'Gerado'}
                                                         </span>
                                                         {b.payload?.version > 1 && (
@@ -494,14 +517,34 @@ export default function Profile() {
                                                             title="Ver Detalhes"
                                                         >
                                                             <Eye size={20} />
+
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleEditBudget(b)}
-                                                            className="p-2 text-gray-500 hover:text-[#0071b4] hover:bg-blue-50 rounded-full transition ml-1"
-                                                            title="Editar Orçamento"
-                                                        >
-                                                            <Pencil size={20} />
-                                                        </button>
+                                                        {b.status === 'erro' ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleEditBudget(b)}
+                                                                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition ml-1"
+                                                                    title="Tentar Novamente"
+                                                                >
+                                                                    <RotateCcw size={20} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteBudget(b)}
+                                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition ml-1"
+                                                                    title="Excluir"
+                                                                >
+                                                                    <Trash2 size={20} />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleEditBudget(b)}
+                                                                className="p-2 text-gray-500 hover:text-[#0071b4] hover:bg-blue-50 rounded-full transition ml-1"
+                                                                title="Editar Orçamento"
+                                                            >
+                                                                <Pencil size={20} />
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -515,92 +558,94 @@ export default function Profile() {
             </div>
 
             {/* Modal de Detalhes */}
-            {selectedBudget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 p-2 rounded-lg text-[#0071b4]">
-                                    <FileText size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Detalhes do Orçamento</h3>
-                                    <p className="text-sm text-gray-500">
-                                        {formatDate(selectedBudget.created_at)} • {selectedBudget.cliente_empresa}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setSelectedBudget(null)}
-                                className="text-gray-400 hover:text-gray-600 transition"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cliente</p>
-                                    <p className="font-medium text-gray-800">{selectedBudget.cliente_empresa}</p>
-                                    <p className="text-sm text-gray-600">{selectedBudget.cliente_nome}</p>
-                                    <p className="text-sm text-gray-600">{selectedBudget.cliente_cnpj}</p>
-                                </div>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Valores</p>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-600">Subtotal:</span>
-                                        <span>{formatCurrency(selectedBudget.payload?.valores?.subtotal || 0)}</span>
+            {
+                selectedBudget && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-blue-100 p-2 rounded-lg text-[#0071b4]">
+                                        <FileText size={24} />
                                     </div>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-600">Impostos:</span>
-                                        <span>{formatCurrency((selectedBudget.payload?.valores?.icms || 0) + (selectedBudget.payload?.valores?.ipi || 0))}</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-gray-800 pt-2 border-t border-gray-200 mt-2">
-                                        <span>Total:</span>
-                                        <span className="text-[#0071b4]">{formatCurrency(selectedBudget.valor_total)}</span>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-800">Detalhes do Orçamento</h3>
+                                        <p className="text-sm text-gray-500">
+                                            {formatDate(selectedBudget.created_at)} • {selectedBudget.cliente_empresa}
+                                        </p>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={() => setSelectedBudget(null)}
+                                    className="text-gray-400 hover:text-gray-600 transition"
+                                >
+                                    <X size={24} />
+                                </button>
                             </div>
 
-                            <h4 className="font-semibold text-gray-800 mb-3">Itens do Orçamento</h4>
-                            <div className="border rounded-lg overflow-hidden">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-600 font-medium">
-                                        <tr>
-                                            <th className="p-3">Código</th>
-                                            <th className="p-3">Produto</th>
-                                            <th className="p-3 text-center">Qtd</th>
-                                            <th className="p-3 text-right">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {(selectedBudget.payload?.itens || []).map((item, idx) => (
-                                            <tr key={idx}>
-                                                <td className="p-3 text-gray-600">{item.codigo}</td>
-                                                <td className="p-3 font-medium text-gray-800">{item.nome}</td>
-                                                <td className="p-3 text-center">{item.quantidade} {item.unidade}</td>
-                                                <td className="p-3 text-right font-medium">
-                                                    {formatCurrency(item.subtotal)}
-                                                </td>
+                            <div className="p-6 overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cliente</p>
+                                        <p className="font-medium text-gray-800">{selectedBudget.cliente_empresa}</p>
+                                        <p className="text-sm text-gray-600">{selectedBudget.cliente_nome}</p>
+                                        <p className="text-sm text-gray-600">{selectedBudget.cliente_cnpj}</p>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Valores</p>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-600">Subtotal:</span>
+                                            <span>{formatCurrency(selectedBudget.payload?.valores?.subtotal || 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-600">Impostos:</span>
+                                            <span>{formatCurrency((selectedBudget.payload?.valores?.icms || 0) + (selectedBudget.payload?.valores?.ipi || 0))}</span>
+                                        </div>
+                                        <div className="flex justify-between font-bold text-gray-800 pt-2 border-t border-gray-200 mt-2">
+                                            <span>Total:</span>
+                                            <span className="text-[#0071b4]">{formatCurrency(selectedBudget.valor_total)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h4 className="font-semibold text-gray-800 mb-3">Itens do Orçamento</h4>
+                                <div className="border rounded-lg overflow-hidden">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-50 text-gray-600 font-medium">
+                                            <tr>
+                                                <th className="p-3">Código</th>
+                                                <th className="p-3">Produto</th>
+                                                <th className="p-3 text-center">Qtd</th>
+                                                <th className="p-3 text-right">Total</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {(selectedBudget.payload?.itens || []).map((item, idx) => (
+                                                <tr key={idx}>
+                                                    <td className="p-3 text-gray-600">{item.codigo}</td>
+                                                    <td className="p-3 font-medium text-gray-800">{item.nome}</td>
+                                                    <td className="p-3 text-center">{item.quantidade} {item.unidade}</td>
+                                                    <td className="p-3 text-right font-medium">
+                                                        {formatCurrency(item.subtotal)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-                            <button
-                                onClick={() => setSelectedBudget(null)}
-                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
-                            >
-                                Fechar
-                            </button>
+                            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+                                <button
+                                    onClick={() => setSelectedBudget(null)}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
+                                >
+                                    Fechar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     )
 }

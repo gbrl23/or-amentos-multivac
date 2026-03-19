@@ -6,6 +6,8 @@ import AuthMultivac from './Auth.jsx'
 import Orcamento from './pages/Orcamento.jsx'
 import Profile from './pages/Profile.jsx'
 import ManageUsers from './pages/ManageUsers.jsx'
+
+import AdminDashboard from './pages/AdminDashboard.jsx' // [NEW]
 import UpdatePasswordModal from './components/UpdatePasswordModal.jsx' // [NEW]
 
 // Rota protegida + controle de sessão + timeout de inatividade
@@ -157,6 +159,16 @@ export default function App() {
           element={
             <ProtectedRoute setPasswordModal={setPasswordModal}>
               <ManageUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Dashboard Admin */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute setPasswordModal={setPasswordModal}>
+              <AdminDashboard />
             </ProtectedRoute>
           }
         />
