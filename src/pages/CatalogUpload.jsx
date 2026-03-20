@@ -91,8 +91,11 @@ export default function CatalogUpload() {
     let inserted = 0, updated = 0;
     const errors = [];
 
-    for (let i = 0; i < rows.length; i += BATCH) {
-      const batch = rows.slice(i, i + BATCH);
+    // Deduplica por ext1 (mantém última ocorrência)
+    const deduped = [...new Map(rows.map(r => [r.ext1, r])).values()];
+
+    for (let i = 0; i < deduped.length; i += BATCH) {
+      const batch = deduped.slice(i, i + BATCH);
       const { error } = await supabase
         .from("lista_produtos")
         .upsert(batch, { onConflict: "ext1", ignoreDuplicates: false });
@@ -103,10 +106,10 @@ export default function CatalogUpload() {
         // estimativa simples (supabase não retorna contagem por upsert)
         inserted += batch.length;
       }
-      setProgress(Math.round(((i + BATCH) / rows.length) * 100));
+      setProgress(Math.round(((i + BATCH) / deduped.length) * 100));
     }
 
-    setResult({ inserted, updated, errors });
+    setResult({ inserted: deduped.length - errors.length, updated, errors });
     setStage("done");
   };
 

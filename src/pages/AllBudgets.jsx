@@ -25,6 +25,8 @@ export default function AllBudgets() {
     const [isSingleDate, setIsSingleDate] = useState(false)
     const [filterClient, setFilterClient] = useState('')
     const [filterRep, setFilterRep] = useState('')
+    const [filterCnpj, setFilterCnpj] = useState('')
+    const [filterId, setFilterId] = useState('')
 
     useEffect(() => {
         const init = async () => {
@@ -62,6 +64,8 @@ export default function AllBudgets() {
             }
             if (filterClient) query = query.ilike('cliente_empresa', `%${filterClient}%`)
             if (filterRep) query = query.ilike('payload->>representante', `%${filterRep}%`)
+            if (filterCnpj) query = query.ilike('cliente_cnpj', `%${filterCnpj}%`)
+            if (filterId) query = query.eq('id', filterId)
         }
 
         return query
@@ -85,6 +89,8 @@ export default function AllBudgets() {
         setFilterEndDate('')
         setFilterClient('')
         setFilterRep('')
+        setFilterCnpj('')
+        setFilterId('')
         setIsSingleDate(false)
         setLoadingBudgets(true)
         try {
@@ -250,6 +256,26 @@ export default function AllBudgets() {
                             placeholder="Buscar cliente..."
                             value={filterClient}
                             onChange={(e) => setFilterClient(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">CNPJ</label>
+                        <input
+                            type="text"
+                            placeholder="Buscar CNPJ..."
+                            value={filterCnpj}
+                            onChange={(e) => setFilterCnpj(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">N° Orçamento</label>
+                        <input
+                            type="text"
+                            placeholder="ID do orçamento..."
+                            value={filterId}
+                            onChange={(e) => setFilterId(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
                         />
                     </div>

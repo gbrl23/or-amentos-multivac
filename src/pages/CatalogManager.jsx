@@ -111,20 +111,19 @@ export default function CatalogManager() {
 
     try {
       const { isNew, id, ...payload } = editingItem;
-      
+
       if (!payload.ext1 || !payload.detalhe) {
         alert("Código (EXT1) e Descrição são obrigatórios.");
         setSaving(false);
         return;
       }
 
-      // Se não é novo e tem ID, repassamos o ID pra não gerar duplicata caso ext1 mude acidentalmente (embora não deva mudar)
-      let finalPayload = { ...payload };
-      if (!isNew && id) finalPayload.id = id;
-
-      const { error } = await supabase
-        .from('lista_produtos')
-        .upsert(finalPayload, { onConflict: 'ext1' });
+      let error;
+      if (isNew) {
+        ({ error } = await supabase.from('lista_produtos').insert(payload));
+      } else {
+        ({ error } = await supabase.from('lista_produtos').update(payload).eq('id', id));
+      }
 
       if (error) throw error;
 
