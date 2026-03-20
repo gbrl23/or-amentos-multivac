@@ -7,6 +7,7 @@ import Orcamento from './pages/Orcamento.jsx'
 import Profile from './pages/Profile.jsx'
 import ManageUsers from './pages/ManageUsers.jsx'
 
+import AllBudgets from './pages/AllBudgets.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import UpdatePasswordModal from './components/UpdatePasswordModal.jsx'
 import CatalogManager from './pages/CatalogManager.jsx'
@@ -136,18 +137,7 @@ export default function App() {
         {/* Tela de login/cadastro/recuperação */}
         <Route path="/" element={<AuthMultivac />} />
 
-        {/* -- Rotas Antigas e Genéricas -- */}
-        {/* Tela de orçamento (podemos mante-la avulsa se não quisermos afetar o app core) */}
-        <Route
-          path="/orcamentos"
-          element={
-            <ProtectedRoute setPasswordModal={setPasswordModal}>
-              <Orcamento />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* -- HUB DO PAINEL ADMIN COM SIDEBAR -- */}
+        {/* -- HUB COM SIDEBAR (todas as rotas protegidas) -- */}
         <Route
           element={
             <ProtectedRoute setPasswordModal={setPasswordModal}>
@@ -155,11 +145,17 @@ export default function App() {
             </ProtectedRoute>
           }
         >
+          {/* Tela de orçamento (acessível por admins e reps) */}
+          <Route path="/orcamentos" element={<Orcamento />} />
+
           {/* Tela de perfil */}
           <Route path="/perfil" element={<Profile />} />
 
           {/* Tela de gestão de usuários */}
           <Route path="/usuarios" element={<ManageUsers />} />
+
+          {/* Listagem de orçamentos (admin: todos, rep: próprios) */}
+          <Route path="/propostas" element={<AllBudgets />} />
 
           {/* Dashboard Admin (Resumo) */}
           <Route path="/dashboard" element={<AdminDashboard />} />

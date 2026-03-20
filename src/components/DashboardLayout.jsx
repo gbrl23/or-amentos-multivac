@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import {
   LayoutDashboard,
   FileText,
+  ClipboardList,
   Package,
   Upload,
   Users,
@@ -40,6 +41,7 @@ export default function DashboardLayout() {
   const adminMenuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/orcamentos', icon: FileText, label: 'Criar Orçamentos' },
+    { path: '/propostas', icon: ClipboardList, label: 'Todos os Orçamentos' },
     { path: '/dashboard/catalogo', icon: Package, label: 'Catálogo de Produtos' },
     { path: '/dashboard/catalogo/upload', icon: Upload, label: 'Importar Lote CSV' },
     { path: '/usuarios', icon: Users, label: 'Gerenciar Equipe' },
@@ -47,6 +49,7 @@ export default function DashboardLayout() {
 
   const repMenuItems = [
     { path: '/orcamentos', icon: FileText, label: 'Novo Orçamento' },
+    { path: '/propostas', icon: ClipboardList, label: 'Meus Orçamentos' },
     { path: '/perfil', icon: User, label: 'Meu Perfil' },
   ];
 
@@ -59,6 +62,7 @@ export default function DashboardLayout() {
     '/dashboard/catalogo/upload': 'Importação de Dados',
     '/usuarios': 'Gerenciamento de Equipe',
     '/orcamentos': isAdmin ? 'Criar Orçamentos' : 'Novo Orçamento',
+    '/propostas': isAdmin ? 'Todos os Orçamentos' : 'Meus Orçamentos',
     '/perfil': 'Perfil e Preferências',
   };
 
@@ -77,7 +81,7 @@ export default function DashboardLayout() {
             {isAdmin ? 'Navegação Principal' : 'Menu'}
           </div>
           {finalMenuItems.map((item) => {
-            const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== '/dashboard' && item.path !== '/orcamentos' && item.path !== '/dashboard/catalogo');
+            const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== '/dashboard' && item.path !== '/orcamentos' && item.path !== '/propostas' && item.path !== '/dashboard/catalogo');
             const Icon = item.icon;
             return (
               <NavLink

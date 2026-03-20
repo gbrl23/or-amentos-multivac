@@ -34,7 +34,7 @@ function parseCSV(text) {
       if (["vd_preco","al_ipi","peso","comprimento","largura","altura","cubagem","qtd_min"].includes(h)) {
         val = parseFloat(val.replace(",", ".")) || 0;
       }
-      if (h === "ativo") val = val === "true";
+      if (h === "ativo") val = ["true","1","sim","yes","ativo"].includes(val.toLowerCase());
       row[h] = val;
     });
     return row;

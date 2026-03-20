@@ -165,7 +165,7 @@ export default function Profile() {
                 .from('orcamentos')
                 .delete()
                 .eq('id', budget.id)
-                .eq('status', 'erro') // Extra safety check
+                .eq('status', 'rascunho') // Extra safety check
 
             if (error) throw error
 
@@ -501,8 +501,13 @@ export default function Profile() {
                                                         {formatCurrency(b.valor_total)}
                                                     </td>
                                                     <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${b.status === 'erro' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                                            {b.status || 'Gerado'}
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
+                                                            b.status === 'rascunho' ? 'bg-yellow-100 text-yellow-700' :
+                                                            b.status === 'aprovado' ? 'bg-green-100 text-green-700' :
+                                                            b.status === 'perdido' ? 'bg-red-100 text-red-700' :
+                                                            'bg-blue-100 text-blue-700'
+                                                        }`}>
+                                                            {b.status || 'Enviado'}
                                                         </span>
                                                         {b.payload?.version > 1 && (
                                                             <span className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700" title="Proposta editada">
@@ -519,7 +524,7 @@ export default function Profile() {
                                                             <Eye size={20} />
 
                                                         </button>
-                                                        {b.status === 'erro' ? (
+                                                        {b.status === 'rascunho' ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => handleEditBudget(b)}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import {
@@ -6,6 +6,7 @@ import {
     FilePen,
     Loader2
 } from 'lucide-react'
+import { StatusFunnel, RetrabalhoRanking, VolumeMetrics } from '../components/dashboard'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -40,7 +41,7 @@ export default function AdminDashboard() {
                 .select('payload')
                 .gte('created_at', firstDay)
                 .lte('created_at', lastDay)
-                .neq('status', 'erro')
+                .neq('status', 'rascunho')
 
             if (errData) throw errData
 
@@ -106,18 +107,13 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Placeholder for Recent Activity */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <h3 className="text-lg font-bold text-gray-900 mb-6">Atividade Recente</h3>
-                <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 mb-4">
-                        <FileText size={24} className="text-gray-300" />
-                    </div>
-                    <h4 className="text-base font-bold text-gray-700">Histórico em Desenvolvimento</h4>
-                    <p className="text-sm text-gray-500 mt-2 max-w-md">
-                        Em breve, as propostas geradas e alteradas pela equipe aparecerão aqui listadas cronologicamente para sua auditoria rápida.
-                    </p>
-                </div>
+            {/* Bloco 1: Funil de Status */}
+            <StatusFunnel />
+
+            {/* Bloco 2 + 3: Retrabalho e Volume lado a lado em telas grandes */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <RetrabalhoRanking />
+                <VolumeMetrics />
             </div>
         </div>
     )
