@@ -598,7 +598,7 @@ export default function OrcamentoMultivac() {
 
   // ===================== UI =====================
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 relative">
+    <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500 relative">
       <ToastHost />
 
       {/* Setup User Modal */}
@@ -647,8 +647,8 @@ export default function OrcamentoMultivac() {
       )}
 
       {/* ====== Dados do Cliente ====== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Dados do Cliente</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Dados do Cliente</h2>
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
@@ -746,7 +746,7 @@ export default function OrcamentoMultivac() {
       </div>
 
       {/* ====== Produtos ====== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-lg font-bold text-gray-900">Produtos</h2>
           <button onClick={adicionarItem} disabled={carregandoProdutos}
@@ -860,8 +860,8 @@ export default function OrcamentoMultivac() {
       </div>
 
       {/* ====== Impostos e Descontos ====== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Impostos e Descontos</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Impostos e Descontos</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">ICMS (%) *</label>
@@ -883,8 +883,8 @@ export default function OrcamentoMultivac() {
       </div>
 
       {/* ====== Dados Comerciais ====== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Dados Comerciais</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Dados Comerciais</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Validade da Proposta</label>
@@ -950,8 +950,8 @@ export default function OrcamentoMultivac() {
       </div>
 
       {/* ====== Resumo Financeiro ====== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Resumo Financeiro</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Resumo Financeiro</h2>
         <div className="space-y-3">
           <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium text-gray-800">R$ {calcularSubtotal().toFixed(2)}</span></div>
           <div className="flex justify-between text-sm text-red-600"><span>Desconto ({n(desconto)}%)</span><span className="font-medium">- R$ {calcularDesconto().toFixed(2)}</span></div>
@@ -969,7 +969,7 @@ export default function OrcamentoMultivac() {
       {/* Botão Gerar */}
       <div className="flex justify-end pb-4">
         <button ref={gerarBtnRef} onClick={confirmarGerarOrcamento} disabled={enviando}
-          className="bg-[#0071b4] hover:bg-[#005a91] text-white px-8 py-3 rounded-xl text-base font-semibold transition shadow-lg shadow-blue-500/20 ring-1 ring-[#005a91]/50 disabled:opacity-50 disabled:cursor-not-allowed">
+          className="w-full sm:w-auto bg-[#0071b4] hover:bg-[#005a91] text-white px-8 py-3 rounded-xl text-base font-semibold transition shadow-lg shadow-blue-500/20 ring-1 ring-[#005a91]/50 disabled:opacity-50 disabled:cursor-not-allowed">
           {editMode ? (previousStatus === 'rascunho' ? 'Tentar Novamente' : 'Salvar Alterações') : 'Gerar Orçamento'}
         </button>
       </div>
@@ -978,7 +978,7 @@ export default function OrcamentoMultivac() {
       {showConfirm && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={fecharPopover} aria-hidden="true" />
-          <div className="fixed z-50 w-[420px] max-w-[94vw] bg-white rounded-2xl shadow-2xl border border-gray-200" style={{ top: popoverPos.top, left: popoverPos.left }} role="dialog" aria-modal="true">
+          <div className="fixed z-50 inset-x-4 sm:inset-x-auto top-1/2 left-1/2 -translate-y-1/2 sm:-translate-x-1/2 w-auto sm:w-[420px] bg-white rounded-2xl shadow-2xl border border-gray-200" role="dialog" aria-modal="true">
             {!respostaN8n ? (
               <div className="p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-3">Confirmar envio</h3>
@@ -1015,7 +1015,7 @@ export default function OrcamentoMultivac() {
                 </div>
               </div>
             )}
-            <div className={`absolute ${popoverPos.placement === 'bottom' ? '-top-2' : '-bottom-2'} right-6 w-0 h-0 border-l-8 border-r-8 ${popoverPos.placement === 'bottom' ? 'border-b-8 border-b-white border-l-transparent border-r-transparent' : 'border-t-8 border-t-white border-l-transparent border-r-transparent'}`} />
+            <div className={`hidden sm:block absolute ${popoverPos.placement === 'bottom' ? '-top-2' : '-bottom-2'} right-6 w-0 h-0 border-l-8 border-r-8 ${popoverPos.placement === 'bottom' ? 'border-b-8 border-b-white border-l-transparent border-r-transparent' : 'border-t-8 border-t-white border-l-transparent border-r-transparent'}`} />
           </div>
         </>
       )}

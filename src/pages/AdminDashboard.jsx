@@ -75,33 +75,35 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Card 1: Gerados */}
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div className="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
                     <div className="relative z-10">
-                        <p className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Orçamentos Gerados (Mês)</p>
-                        <h2 className="text-5xl font-bold text-gray-900">{stats.createdThisMonth}</h2>
+                        <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400 mb-1 sm:mb-2">Orçamentos Gerados (Mês)</p>
+                        <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">{stats.createdThisMonth}</h2>
                     </div>
-                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4] group-hover:scale-110 transition-transform duration-300">
-                        <FileText size={32} strokeWidth={1.5} />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4] group-hover:scale-110 transition-transform duration-300">
+                        <FileText size={24} className="sm:hidden" strokeWidth={1.5} />
+                        <FileText size={32} className="hidden sm:block" strokeWidth={1.5} />
                     </div>
-                    <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none">
+                    <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none hidden sm:block">
                         <FileText size={180} />
                     </div>
                 </div>
 
                 {/* Card 2: Alterados */}
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
+                <div className="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition">
                     <div className="relative z-10">
-                        <p className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-2">Orçamentos Alterados (Mês)</p>
-                        <h2 className="text-5xl font-bold text-gray-900">{stats.alteredThisMonth}</h2>
+                        <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-400 mb-1 sm:mb-2">Orçamentos Alterados (Mês)</p>
+                        <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">{stats.alteredThisMonth}</h2>
                     </div>
-                    <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4] group-hover:scale-110 transition-transform duration-300">
-                        <FilePen size={32} strokeWidth={1.5} />
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4] group-hover:scale-110 transition-transform duration-300">
+                        <FilePen size={24} className="sm:hidden" strokeWidth={1.5} />
+                        <FilePen size={32} className="hidden sm:block" strokeWidth={1.5} />
                     </div>
-                    <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none">
+                    <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none hidden sm:block">
                         <FilePen size={180} />
                     </div>
                 </div>
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
             <StatusFunnel />
 
             {/* Bloco 2 + 3: Retrabalho e Volume lado a lado em telas grandes */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 <RetrabalhoRanking />
                 <VolumeMetrics />
             </div>

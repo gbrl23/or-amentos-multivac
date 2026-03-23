@@ -86,7 +86,7 @@ export default function StatusFunnel() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-[#0071b4]" size={32} />
         </div>
@@ -95,16 +95,16 @@ export default function StatusFunnel() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-gray-900">Funil de Status</h3>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900">Funil de Status</h3>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {PERIODOS.map(p => (
             <button
               key={p.key}
               onClick={() => setPeriodo(p.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+              className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md transition ${
                 periodo === p.key
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -136,7 +136,7 @@ export default function StatusFunnel() {
         <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Taxa de Conversão</p>
 
         {/* Funnel steps */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2">
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-gray-500">Rascunho → Enviado</span>
@@ -150,7 +150,7 @@ export default function StatusFunnel() {
             </div>
           </div>
 
-          <ArrowRight size={16} className="text-gray-300 flex-shrink-0 mt-3" />
+          <ArrowRight size={16} className="text-gray-300 flex-shrink-0 mt-3 hidden sm:block" />
 
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">

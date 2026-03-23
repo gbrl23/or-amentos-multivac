@@ -100,7 +100,7 @@ export default function VolumeMetrics() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-[#0071b4]" size={32} />
         </div>
@@ -112,21 +112,21 @@ export default function VolumeMetrics() {
   const maxValor = breakdownData.length > 0 ? Math.max(...breakdownData.map(d => d.valor)) : 1
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#0071b4]">
             <BarChart3 size={20} strokeWidth={1.5} />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Volume e Ticket Médio</h3>
+          <h3 className="text-base sm:text-lg font-bold text-gray-900">Volume e Ticket Médio</h3>
         </div>
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           {PERIODOS.map(p => (
             <button
               key={p.key}
               onClick={() => setPeriodo(p.key)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+              className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-md transition ${
                 periodo === p.key
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
@@ -204,12 +204,12 @@ export default function VolumeMetrics() {
             const label = activeTab === 'rep' ? item.nome : item.uf
             const barWidth = maxValor > 0 ? (item.valor / maxValor) * 100 : 0
             return (
-              <div key={label} className="flex items-center gap-3">
+              <div key={label} className="flex items-center gap-2 sm:gap-3">
                 <span className="text-xs text-gray-400 w-5 text-right flex-shrink-0">{i + 1}</span>
-                <span className="text-sm font-medium text-gray-700 w-32 truncate flex-shrink-0" title={label}>
+                <span className="text-xs sm:text-sm font-medium text-gray-700 w-20 sm:w-32 truncate flex-shrink-0" title={label}>
                   {label}
                 </span>
-                <div className="flex-1 h-6 bg-gray-50 rounded-md overflow-hidden relative">
+                <div className="flex-1 h-6 bg-gray-50 rounded-md overflow-hidden relative min-w-0">
                   <div
                     className="h-full bg-[#0071b4]/15 rounded-md transition-all duration-500"
                     style={{ width: `${barWidth}%` }}
@@ -218,7 +218,7 @@ export default function VolumeMetrics() {
                     {item.qtd} orç.
                   </span>
                 </div>
-                <span className="text-sm font-medium text-gray-800 w-28 text-right flex-shrink-0">
+                <span className="text-xs sm:text-sm font-medium text-gray-800 w-20 sm:w-28 text-right flex-shrink-0">
                   {formatBRL(item.valor)}
                 </span>
               </div>

@@ -13,6 +13,8 @@ import {
   PlusCircle,
   UserPlus,
   User,
+  Menu,
+  X,
 } from 'lucide-react';
 
 export default function DashboardLayout() {
@@ -20,6 +22,7 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [userMetadata, setUserMetadata] = useState(null);
   const [userEmail, setUserEmail] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -30,6 +33,11 @@ export default function DashboardLayout() {
     });
   }, []);
 
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/', { replace: true });
@@ -37,7 +45,6 @@ export default function DashboardLayout() {
 
   const isAdmin = userMetadata?.role === 'admin';
 
-  // Menu items condicionais por role
   const adminMenuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/orcamentos', icon: FileText, label: 'Criar Orçamentos' },
@@ -55,7 +62,6 @@ export default function DashboardLayout() {
 
   const finalMenuItems = isAdmin ? adminMenuItems : repMenuItems;
 
-  // Breadcrumb dinâmico
   const breadcrumbs = {
     '/dashboard': 'Visão Geral do Painel',
     '/dashboard/catalogo': 'Catálogo de Produtos',
@@ -68,11 +74,31 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex font-sans text-gray-900">
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 left-0 z-20 shadow-sm">
+      <aside className={`
+        w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 left-0 z-40 shadow-sm
+        transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}>
         {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-100">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
           <img src="https://i.imgur.com/8AtT4EC.png" alt="Multivac" className="h-9 w-auto object-contain" />
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation */}
@@ -120,29 +146,38 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col ml-64 min-h-screen relative overflow-x-hidden">
+      <main className="flex-1 flex flex-col lg:ml-64 min-h-screen relative overflow-x-hidden">
 
         {/* Topbar */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
-          <div className="flex items-center text-sm text-gray-500 font-medium">
-             {breadcrumbs[location.pathname] || ''}
+        <header className="h-14 lg:h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-1 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+              aria-label="Abrir menu"
+            >
+              <Menu size={22} />
+            </button>
+            <span className="text-sm text-gray-500 font-medium truncate">
+              {breadcrumbs[location.pathname] || ''}
+            </span>
           </div>
           {isAdmin && location.pathname !== '/orcamentos' && (
-            <div className="flex items-center gap-4">
-              <button onClick={() => navigate('/usuarios')} className="flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm bg-white">
+            <div className="flex items-center gap-2 lg:gap-4">
+              <button onClick={() => navigate('/usuarios')} className="flex items-center gap-2 text-sm font-medium text-gray-600 border border-gray-200 px-3 lg:px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm bg-white">
                 <UserPlus size={16} />
-                Convidar Usuário
+                <span className="hidden sm:inline">Convidar Usuário</span>
               </button>
-              <button onClick={() => navigate('/orcamentos')} className="flex items-center gap-2 text-sm font-medium text-white bg-[#0071b4] px-5 py-2 rounded-lg hover:bg-[#005a91] transition shadow-lg shadow-blue-500/20 ring-1 ring-[#005a91]/50">
+              <button onClick={() => navigate('/orcamentos')} className="flex items-center gap-2 text-sm font-medium text-white bg-[#0071b4] px-3 lg:px-5 py-2 rounded-lg hover:bg-[#005a91] transition shadow-lg shadow-blue-500/20 ring-1 ring-[#005a91]/50">
                 <PlusCircle size={16} />
-                Criar Proposta
+                <span className="hidden sm:inline">Criar Proposta</span>
               </button>
             </div>
           )}
         </header>
 
         {/* Dynamic Content */}
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 lg:p-8">
           <Outlet />
         </div>
       </main>

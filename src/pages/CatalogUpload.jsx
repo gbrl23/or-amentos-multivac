@@ -132,12 +132,12 @@ export default function CatalogUpload() {
 
   return (
     <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[50vh] overflow-hidden relative pb-10">
-        <div className="px-8 mt-8">
+        <div className="px-4 sm:px-8 mt-6 sm:mt-8">
           <style>{css}</style>
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">Importação em Lote (CSV)</h3>
-              <p className="text-sm text-gray-500 mt-0.5">Atualização massiva · Tabela <code className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">lista_produtos</code></p>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">Importação em Lote (CSV)</h3>
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Atualização massiva · Tabela <code className="bg-gray-100 px-2 py-0.5 rounded text-xs text-gray-600">lista_produtos</code></p>
             </div>
           </div>
 
@@ -309,7 +309,7 @@ const styles = {
   dropzone: {
     border: `2px dashed ${C.border}`,
     borderRadius: 16,
-    padding: "64px 32px",
+    padding: "40px 16px",
     textAlign: "center",
     cursor: "pointer",
     transition: "all 0.25s ease",
@@ -328,11 +328,12 @@ const styles = {
   errorBox: {
     border: `1px solid ${C.error}`,
     background: C.errorLight,
-    padding: "20px 24px",
+    padding: "16px",
     display: "flex",
-    alignItems: "center",
-    gap: 16,
+    alignItems: "flex-start",
+    gap: 12,
     borderRadius: 12,
+    flexWrap: "wrap",
   },
   errorIcon: { color: C.error, fontSize: 20, flexShrink: 0, fontWeight: 700 },
   errorTitle: { margin: "0 0 4px", fontWeight: 600, color: C.error, fontSize: 14 },
@@ -366,7 +367,7 @@ const styles = {
     fontWeight: 600,
     borderRadius: 8,
   },
-  previewActions: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" },
+  previewActions: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", width: "100%" },
   searchInput: {
     background: C.surface,
     border: `1px solid ${C.border}`,
@@ -374,7 +375,9 @@ const styles = {
     padding: "8px 14px",
     fontSize: 13,
     outline: "none",
-    width: 200,
+    width: "100%",
+    maxWidth: 200,
+    minWidth: 0,
     borderRadius: 10,
     transition: "border-color 0.2s",
   },
@@ -448,7 +451,7 @@ const styles = {
   // Uploading
   uploadingBox: {
     textAlign: "center",
-    padding: "80px 32px",
+    padding: "48px 16px",
   },
   uploadingTitle: { fontSize: 16, marginBottom: 24, color: C.text, fontWeight: 600 },
   progressTrack: {
@@ -473,7 +476,7 @@ const styles = {
   // Done
   doneBox: {
     textAlign: "center",
-    padding: "60px 32px",
+    padding: "40px 16px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -550,4 +553,7 @@ const css = `
   .catalog-table-row:hover td { background: #f0f7ff !important; }
   .catalog-progress-fill { animation: catalogPulse 1.5s ease-in-out infinite; }
   @keyframes catalogPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
+  @media (min-width: 640px) {
+    .catalog-dropzone { padding: 64px 32px !important; }
+  }
 `;

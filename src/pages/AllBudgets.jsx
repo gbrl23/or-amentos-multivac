@@ -143,7 +143,7 @@ export default function AllBudgets() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -410,14 +410,14 @@ export default function AllBudgets() {
             {selectedBudget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 p-2 rounded-lg text-[#0071b4]">
+                        <div className="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-start gap-3 bg-gray-50">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="bg-blue-100 p-2 rounded-lg text-[#0071b4] shrink-0">
                                     <FileText size={24} />
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Detalhes do Orçamento</h3>
-                                    <p className="text-sm text-gray-500">
+                                <div className="min-w-0">
+                                    <h3 className="text-base sm:text-lg font-semibold text-gray-800">Detalhes do Orçamento</h3>
+                                    <p className="text-sm text-gray-500 truncate">
                                         {formatDate(selectedBudget.created_at)} • {selectedBudget.cliente_empresa}
                                     </p>
                                 </div>
@@ -430,8 +430,8 @@ export default function AllBudgets() {
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="p-4 sm:p-6 overflow-y-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Cliente</p>
                                     <p className="font-medium text-gray-800">{selectedBudget.cliente_empresa}</p>
@@ -482,17 +482,17 @@ export default function AllBudgets() {
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between">
+                        <div className="p-4 border-t border-gray-100 bg-gray-50 flex flex-col-reverse sm:flex-row justify-between gap-2">
                             <button
                                 onClick={() => { setSelectedBudget(null); handleEditBudget(selectedBudget) }}
-                                className="px-4 py-2 bg-[#0071b4] text-white rounded-lg hover:bg-[#005a91] font-medium transition flex items-center gap-2"
+                                className="px-4 py-2.5 bg-[#0071b4] text-white rounded-lg hover:bg-[#005a91] font-medium transition flex items-center justify-center gap-2"
                             >
                                 <Pencil size={16} />
                                 Editar Orçamento
                             </button>
                             <button
                                 onClick={() => setSelectedBudget(null)}
-                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
+                                className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
                             >
                                 Fechar
                             </button>

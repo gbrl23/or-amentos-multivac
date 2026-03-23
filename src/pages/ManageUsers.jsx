@@ -132,10 +132,10 @@ export default function ManageUsers() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8 animate-in fade-in duration-500">
 
             {/* ====== Convidar Usuário ====== */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4]">
                         <UserPlus size={24} />
@@ -203,7 +203,7 @@ export default function ManageUsers() {
             </div>
 
             {/* ====== Lista de Usuários ====== */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0071b4]">
@@ -275,7 +275,7 @@ export default function ManageUsers() {
 
             {/* ====== Propostas do Representante Selecionado ====== */}
             {selectedUser && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">Propostas de {selectedUser.name || selectedUser.email}</h2>
@@ -376,8 +376,8 @@ export default function ManageUsers() {
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="p-4 sm:p-6 overflow-y-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                 <div className="bg-gray-50 p-4 rounded-xl">
                                     <p className="text-xs text-gray-500 uppercase font-bold mb-2">Cliente</p>
                                     <p className="font-medium text-gray-900">{selectedBudget.cliente_empresa}</p>

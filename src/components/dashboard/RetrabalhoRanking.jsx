@@ -66,7 +66,7 @@ export default function RetrabalhoRanking() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="animate-spin text-[#0071b4]" size={32} />
         </div>
@@ -75,7 +75,7 @@ export default function RetrabalhoRanking() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-[#0071b4]">

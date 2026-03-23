@@ -268,7 +268,7 @@ export default function CatalogManager() {
           />
 
           {/* Painel */}
-          <div className="absolute right-0 top-0 bottom-0 w-[450px] max-w-full bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right-8 duration-300">
+          <div className="absolute right-0 top-0 bottom-0 w-full sm:w-[450px] bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-right-8 duration-300">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white">
               <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 {editingItem?.isNew ? 'Adicionar Produto' : 'Editar Produto'}
