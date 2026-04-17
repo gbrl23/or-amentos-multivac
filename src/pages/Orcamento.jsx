@@ -264,6 +264,9 @@ export default function OrcamentoMultivac() {
     const headers = noPreflight
       ? { 'Content-Type': 'text/plain' }
       : { 'Content-Type': 'application/json' }
+    if (action === 'proposta') {
+      headers['X-API-Key'] = 'mk-proposta-2026-xK9mP'
+    }
     const resp = await fetch(N8N_GATEWAY_URL, { method: 'POST', headers, body: JSON.stringify(body) })
     const text = await resp.text()
     if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`)
