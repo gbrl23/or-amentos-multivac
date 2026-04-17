@@ -584,6 +584,10 @@ export default function OrcamentoMultivac() {
       }
       const data = await callGateway('proposta', payload, { noPreflight: true })
       setRespostaN8n(data)
+      if (newBudgetId && data?.pdfUrl) {
+        try { await supabase.from('orcamentos').update({ pdf_url: data.pdfUrl }).eq('id', newBudgetId) }
+        catch (updateErr) { console.error('Falha ao salvar pdf_url:', updateErr) }
+      }
       showToast('Orçamento gerado com sucesso!', 'success')
     } catch (e) {
       console.error(e)

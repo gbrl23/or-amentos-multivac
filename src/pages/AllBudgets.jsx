@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Loader2, Eye, FileText, Pencil, Filter, X, RotateCcw, Trash2, ClipboardList } from 'lucide-react'
+import { Loader2, Eye, FileText, Pencil, Filter, X, RotateCcw, Trash2, ClipboardList, Download } from 'lucide-react'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { ptBR } from 'date-fns/locale'
@@ -371,6 +371,17 @@ export default function AllBudgets() {
                                             >
                                                 <Eye size={20} />
                                             </button>
+                                            {b.pdf_url && (
+                                                <a
+                                                    href={b.pdf_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition ml-1"
+                                                    title="Baixar PDF"
+                                                >
+                                                    <Download size={20} />
+                                                </a>
+                                            )}
                                             {b.status === 'rascunho' ? (
                                                 <>
                                                     <button
@@ -483,13 +494,26 @@ export default function AllBudgets() {
                         </div>
 
                         <div className="p-4 border-t border-gray-100 bg-gray-50 flex flex-col-reverse sm:flex-row justify-between gap-2">
-                            <button
-                                onClick={() => { setSelectedBudget(null); handleEditBudget(selectedBudget) }}
-                                className="px-4 py-2.5 bg-[#0071b4] text-white rounded-lg hover:bg-[#005a91] font-medium transition flex items-center justify-center gap-2"
-                            >
-                                <Pencil size={16} />
-                                Editar Orçamento
-                            </button>
+                            <div className="flex flex-col-reverse sm:flex-row gap-2">
+                                <button
+                                    onClick={() => { setSelectedBudget(null); handleEditBudget(selectedBudget) }}
+                                    className="px-4 py-2.5 bg-[#0071b4] text-white rounded-lg hover:bg-[#005a91] font-medium transition flex items-center justify-center gap-2"
+                                >
+                                    <Pencil size={16} />
+                                    Editar Orçamento
+                                </button>
+                                {selectedBudget.pdf_url && (
+                                    <a
+                                        href={selectedBudget.pdf_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition flex items-center justify-center gap-2"
+                                    >
+                                        <Download size={16} />
+                                        Baixar PDF
+                                    </a>
+                                )}
+                            </div>
                             <button
                                 onClick={() => setSelectedBudget(null)}
                                 className="px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition"
