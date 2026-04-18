@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Loader2, Eye, FileText, Pencil, Filter, X, RotateCcw, Trash2, ClipboardList, Download } from 'lucide-react'
+import { Loader2, Eye, FileText, Pencil, Filter, X, RotateCcw, Trash2, ClipboardList } from 'lucide-react'
+
+const PdfIcon = ({ size = 20, className = '' }) => (
+    <svg className={className} width={size} height={size} clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+        <path d="m24 25h2c.552 0 1-.448 1-1s-.448-1-1-1h-2v-1h2.5c.552 0 1-.448 1-1s-.448-1-1-1h-3.5c-.552 0-1 .448-1 1v6c0 .552.448 1 1 1s1-.448 1-1z"/>
+        <path d="m14 20c-.552 0-1 .448-1 1v6c0 .552.448 1 1 1h2c2.209 0 4-1.791 4-4 0-.001 0-.001 0-.002 0-2.208-1.79-3.998-3.998-3.998-1.064 0-2.002 0-2.002 0zm1 2h1.002c1.103 0 1.998.895 1.998 1.998v.002c0 1.105-.895 2-2 2h-1z"/>
+        <path d="m7 26h1.002c1.656 0 2.998-1.342 2.998-2.998v-.004c0-1.656-1.342-2.998-2.998-2.998h-2.002c-.552 0-1 .448-1 1v6c0 .552.448 1 1 1s1-.448 1-1zm0-2h1.002c.551 0 .998-.447.998-.998v-.004c0-.551-.447-.998-.998-.998h-1.002z"/>
+        <path d="m17 5v5c0 1.657 1.343 3 3 3h5v4c0 .552.448 1 1 1s1-.448 1-1v-5c0-.265-.105-.52-.293-.707l-8-8c-.187-.188-.442-.293-.707-.293 0 0-6.586 0-10 0-1.657 0-3 1.343-3 3v11c0 .552.448 1 1 1s1-.448 1-1c0 0 0-7.354 0-11 0-.552.448-1 1-1zm2 1.414v3.586c0 .552.448 1 1 1h3.586z"/>
+    </svg>
+)
 import DatePicker, { registerLocale } from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { ptBR } from 'date-fns/locale'
@@ -123,6 +132,23 @@ export default function AllBudgets() {
             console.error('Erro ao excluir:', e)
         } finally {
             setLoadingBudgets(false)
+        }
+    }
+
+    const handleDownloadPdf = async (url, clientName) => {
+        try {
+            const response = await fetch(url)
+            const blob = await response.blob()
+            const blobUrl = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = blobUrl
+            link.download = `Proposta_${clientName || 'Multivac'}.pdf`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(blobUrl)
+        } catch (e) {
+            console.error('Erro ao baixar PDF:', e)
         }
     }
 
@@ -372,15 +398,13 @@ export default function AllBudgets() {
                                                 <Eye size={20} />
                                             </button>
                                             {b.pdf_url && (
-                                                <a
-                                                    href={b.pdf_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition ml-1"
+                                                <button
+                                                    onClick={() => handleDownloadPdf(b.pdf_url, b.cliente_empresa)}
+                                                    className="inline-flex p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition ml-1"
                                                     title="Baixar PDF"
                                                 >
-                                                    <Download size={20} />
-                                                </a>
+                                                    <PdfIcon size={20} />
+                                                </button>
                                             )}
                                             {b.status === 'rascunho' ? (
                                                 <>
@@ -503,15 +527,13 @@ export default function AllBudgets() {
                                     Editar Orçamento
                                 </button>
                                 {selectedBudget.pdf_url && (
-                                    <a
-                                        href={selectedBudget.pdf_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition flex items-center justify-center gap-2"
+                                    <button
+                                        onClick={() => handleDownloadPdf(selectedBudget.pdf_url, selectedBudget.cliente_empresa)}
+                                        className="px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition flex items-center justify-center gap-2"
                                     >
-                                        <Download size={16} />
+                                        <PdfIcon size={16} />
                                         Baixar PDF
-                                    </a>
+                                    </button>
                                 )}
                             </div>
                             <button
