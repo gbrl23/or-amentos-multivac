@@ -98,7 +98,7 @@ export default function OrcamentoMultivac() {
   })
 
   const [itens, setItens] = useState([
-    { id: 1, codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0 }
+    { id: 1, codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0, desconto: 0 }
   ])
 
   const [comercial, setComercial] = useState({
@@ -230,7 +230,7 @@ export default function OrcamentoMultivac() {
       nome: '', empresa: '', cnpj: '', inscricaoEstadual: '', isentoIE: false,
       email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final'
     })
-    setItens([{ id: Date.now(), codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0 }])
+    setItens([{ id: Date.now(), codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0, desconto: 0 }])
     setComercial({
       validade: calcularValidadePadrao(),
       formaPagamento: '28/56 dias', formaPagamentoDetalhe: '', prazoEntrega: '',
@@ -267,9 +267,6 @@ export default function OrcamentoMultivac() {
     const headers = noPreflight
       ? { 'Content-Type': 'text/plain' }
       : { 'Content-Type': 'application/json' }
-    if (action === 'proposta') {
-      headers['X-API-Key'] = 'mk-proposta-2026-xK9mP'
-    }
     const resp = await fetch(N8N_GATEWAY_URL, { method: 'POST', headers, body: JSON.stringify(body) })
     const text = await resp.text()
     if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`)
@@ -335,7 +332,8 @@ export default function OrcamentoMultivac() {
         setItens(payload.itens.map(i => ({
           ...i, id: Date.now() + Math.random(),
           multiplo: i.multiplo || 1, unidade: i.unidade || 'UN',
-          ipi: i.ipi || 0, precoUnitario: i.precoUnitario || 0, quantidade: i.quantidade || 1
+          ipi: i.ipi || 0, precoUnitario: i.precoUnitario || 0, quantidade: i.quantidade || 1,
+          desconto: n(i.desconto, 0),
         })))
       }
       if (payload.comercial) setComercial(payload.comercial)
@@ -408,14 +406,13 @@ export default function OrcamentoMultivac() {
   const atualizarBuscaItem = (itemId, valor) => {
     setBuscasItens((b) => ({ ...b, [itemId]: valor }))
     setDropdownAberto(itemId)
-    setErrors((prev) => ({ ...prev, itens: { ...(prev.itens || {}), [itemId]: { ...(prev.itens?.[itemId] || {}), codigo: true } } }))
+    setErrors((prev) => ({ ...prev, itens: { ...(prev.itens || {}), [itemId]: { ...(prev.itens?.[itemId] || {}), codigo: false } } }))
   }
 
   const adicionarItem = () => {
     const id = Date.now()
-    setItens((arr) => [...arr, { id, codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0 }])
+    setItens((arr) => [...arr, { id, codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0, desconto: 0 }])
     setBuscasItens((b) => ({ ...b, [id]: '' }))
-    setDropdownAberto(id)
     itemRefs.current[id] = { produto: React.createRef(), quantidade: React.createRef() }
   }
 
@@ -451,7 +448,7 @@ export default function OrcamentoMultivac() {
 
   const limparProduto = (id) => {
     setItens((arr) => arr.map((i) => i.id === id
-      ? { ...i, codigo: '', nome: '', precoUnitario: 0, quantidade: 1, multiplo: 1, unidade: 'UN', ipi: 0 }
+      ? { ...i, codigo: '', nome: '', precoUnitario: 0, quantidade: 1, multiplo: 1, unidade: 'UN', ipi: 0, desconto: 0 }
       : i
     ))
     setBuscasItens((b) => ({ ...b, [id]: '' }))
@@ -463,8 +460,12 @@ export default function OrcamentoMultivac() {
   // ---- Totais ----
   const itemSubtotal = (i) => n(i.quantidade) * n(i.precoUnitario)
   const itemIPI = (i) => itemSubtotal(i) * (n(i.ipi) / 100)
+  const itemDesconto = (i) => itemSubtotal(i) * (n(i.desconto) / 100)
+  const descontoPorItem = itens.some(i => n(i.desconto) > 0)
   const calcularSubtotal = () => itens.reduce((acc, i) => acc + itemSubtotal(i), 0)
-  const calcularDesconto = () => calcularSubtotal() * (n(desconto) / 100)
+  const calcularDesconto = () => descontoPorItem
+    ? itens.reduce((acc, i) => acc + itemDesconto(i), 0)
+    : calcularSubtotal() * (n(desconto) / 100)
   const calcularICMS = () => calcularSubtotal() * (n(icms) / 100)
   const calcularIPITotal = () => itens.reduce((acc, i) => acc + itemIPI(i), 0)
   const calcularTotal = () => n(calcularSubtotal() - calcularDesconto() + calcularICMS() + calcularIPITotal(), 0)
@@ -556,10 +557,12 @@ export default function OrcamentoMultivac() {
         codigo: i.codigo, nome: i.nome, quantidade: n(i.quantidade, 1),
         precoUnitario: n(i.precoUnitario, 0), multiplo: n(i.multiplo, 1),
         unidade: i.unidade ?? i.un ?? 'UN', ipi: n(i.ipi, 0),
+        desconto: n(i.desconto, 0),
         subtotal: itemSubtotal(i), ipiValor: itemIPI(i),
+        descontoValor: itemDesconto(i), subtotalLiquido: itemSubtotal(i) - itemDesconto(i),
       })),
-      comercial: { ...comercial, observacoes: (comercial.observacoes || '') + obsAdicionais, formaPagamento: comercial.formaPagamento, icms: n(icms, 0), desconto: n(desconto, 0) },
-      icms: n(icms, 0), desconto: n(desconto, 0),
+      comercial: { ...comercial, observacoes: (comercial.observacoes || '') + obsAdicionais, formaPagamento: comercial.formaPagamento, icms: n(icms, 0), desconto: n(desconto, 0), descontoPorItem },
+      icms: n(icms, 0), desconto: n(desconto, 0), descontoPorItem,
       valores: { subtotal: calcularSubtotal(), desconto: calcularDesconto(), icms: calcularICMS(), ipi: calcularIPITotal(), total: calcularTotal() }
     }
 
@@ -858,9 +861,28 @@ export default function OrcamentoMultivac() {
                       <div><span className="text-gray-400">IPI R$:</span><span className="ml-1 font-medium text-gray-700">R$ {itemIPI(item).toFixed(2)}</span></div>
                     </div>
                   )}
-                  <div className="mt-3 text-right">
-                    <span className="text-xs text-gray-400">Subtotal: </span>
-                    <span className="font-bold text-gray-800">R$ {itemSubtotal(item).toFixed(2)}</span>
+                  <div className="mt-3 flex items-end justify-between">
+                    {item.codigo ? (
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-medium text-gray-500 whitespace-nowrap">Desc. (%)</label>
+                        <select
+                          value={n(item.desconto)}
+                          onChange={(e) => atualizarItem(item.id, 'desconto', parseFloat(e.target.value))}
+                          disabled={n(desconto) > 0}
+                          title={n(desconto) > 0 ? 'Remova o desconto global para aplicar por item.' : ''}
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0071b4] transition disabled:bg-gray-50 disabled:text-gray-300 disabled:cursor-not-allowed"
+                        >
+                          {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(v => <option key={v} value={v}>{v}%</option>)}
+                        </select>
+                      </div>
+                    ) : <div />}
+                    <div className="text-right">
+                      <span className="text-xs text-gray-400">Subtotal: </span>
+                      <span className="font-bold text-gray-800">R$ {itemSubtotal(item).toFixed(2)}</span>
+                      {item.codigo && n(item.desconto) > 0 && (
+                        <div className="text-xs text-red-500 mt-0.5">- R$ {itemDesconto(item).toFixed(2)} ({n(item.desconto)}% desc.)</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
@@ -885,9 +907,16 @@ export default function OrcamentoMultivac() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Desconto (%)</label>
-            <select ref={refs.desconto} value={desconto} onChange={(e) => setDesconto(parseFloat(e.target.value))} className={inputClass('impostos', 'desconto')}>
+            <select
+              ref={refs.desconto} value={desconto}
+              onChange={(e) => setDesconto(parseFloat(e.target.value))}
+              disabled={descontoPorItem}
+              title={descontoPorItem ? 'Descontos aplicados por item. Remova-os para usar o desconto global.' : ''}
+              className={`${inputClass('impostos', 'desconto')} disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed`}
+            >
               {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((v) => (<option key={v} value={v}>{v}%</option>))}
             </select>
+            {descontoPorItem && <p className="text-xs text-gray-400 mt-1">Descontos aplicados por item.</p>}
           </div>
         </div>
       </div>
@@ -964,7 +993,7 @@ export default function OrcamentoMultivac() {
         <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Resumo Financeiro</h2>
         <div className="space-y-3">
           <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium text-gray-800">R$ {calcularSubtotal().toFixed(2)}</span></div>
-          <div className="flex justify-between text-sm text-red-600"><span>Desconto ({n(desconto)}%)</span><span className="font-medium">- R$ {calcularDesconto().toFixed(2)}</span></div>
+          <div className="flex justify-between text-sm text-red-600"><span>Desconto {descontoPorItem ? '(por item)' : `(${n(desconto)}%)`}</span><span className="font-medium">- R$ {calcularDesconto().toFixed(2)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-500">ICMS ({n(icms)}%)</span><span className="font-medium text-gray-800">+ R$ {calcularICMS().toFixed(2)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-500">IPI (itens com IPI)</span><span className="font-medium text-gray-800">+ R$ {calcularIPITotal().toFixed(2)}</span></div>
           <div className="border-t border-gray-100 pt-4 mt-2">
@@ -995,7 +1024,7 @@ export default function OrcamentoMultivac() {
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm mb-5 space-y-1">
                   <div className="flex justify-between"><span className="text-gray-500">Cliente:</span><span className="font-medium text-gray-800">{cliente.empresa || '—'}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">Subtotal:</span><span className="font-medium">R$ {calcularSubtotal().toFixed(2)}</span></div>
-                  <div className="flex justify-between text-red-600"><span>Desconto ({n(desconto)}%):</span><span className="font-medium">- R$ {calcularDesconto().toFixed(2)}</span></div>
+                  <div className="flex justify-between text-red-600"><span>Desconto {descontoPorItem ? '(por item)' : `(${n(desconto)}%)`}:</span><span className="font-medium">- R$ {calcularDesconto().toFixed(2)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">ICMS ({n(icms)}%):</span><span className="font-medium">+ R$ {calcularICMS().toFixed(2)}</span></div>
                   <div className="flex justify-between"><span className="text-gray-500">IPI:</span><span className="font-medium">+ R$ {calcularIPITotal().toFixed(2)}</span></div>
                   <div className="flex justify-between border-t border-gray-200 pt-2 mt-2"><span className="font-semibold text-gray-800">Total:</span><span className="font-bold text-[#0071b4]">R$ {calcularTotal().toFixed(2)}</span></div>
