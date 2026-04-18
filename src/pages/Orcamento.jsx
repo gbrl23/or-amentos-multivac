@@ -91,6 +91,7 @@ export default function OrcamentoMultivac() {
 
   // Estados
   const [representante, setRepresentante] = useState('')
+  const [representanteEmail, setRepresentanteEmail] = useState('')
   const [cliente, setCliente] = useState({
     nome: '', empresa: '', cnpj: '', inscricaoEstadual: '', isentoIE: false,
     email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final'
@@ -198,6 +199,8 @@ export default function OrcamentoMultivac() {
       if (!session) return navigate('/', { replace: true })
       const user = session.user
       const nome = user.user_metadata?.full_name || user.user_metadata?.name
+
+      setRepresentanteEmail(user.email ?? '')
 
       if (nome) {
         setRepresentante(nome)
@@ -548,7 +551,7 @@ export default function OrcamentoMultivac() {
 
     const payload = {
       isEdited: editMode, version: nextVer, versaoLabel: nextVer > 1 ? `V${nextVer}` : '',
-      representante, cliente,
+      representante, representanteEmail, cliente,
       itens: itens.map(i => ({
         codigo: i.codigo, nome: i.nome, quantidade: n(i.quantidade, 1),
         precoUnitario: n(i.precoUnitario, 0), multiplo: n(i.multiplo, 1),
