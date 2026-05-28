@@ -27,6 +27,7 @@ export default function AllBudgets() {
     const [budgets, setBudgets] = useState([])
     const [loadingBudgets, setLoadingBudgets] = useState(true)
     const [selectedBudget, setSelectedBudget] = useState(null)
+    const [budgetToDelete, setBudgetToDelete] = useState(null)
 
     // Filtros
     const [filterStartDate, setFilterStartDate] = useState('')
@@ -117,16 +118,16 @@ export default function AllBudgets() {
         navigate('/orcamentos', { state: { editMode: true, budgetData: budget } })
     }
 
-    const handleDeleteBudget = async (budget) => {
-        if (!window.confirm('Tem certeza que deseja excluir este rascunho?')) return
+    const handleDeleteBudget = async () => {
+        if (!budgetToDelete) return
         try {
             setLoadingBudgets(true)
-            const { error } = await supabase
-                .from('orcamentos')
-                .delete()
-                .eq('id', budget.id)
-                .eq('status', 'rascunho')
+            let query = supabase.from('orcamentos').delete().eq('id', budgetToDelete.id)
+            if (!isAdmin) query = query.eq('status', 'rascunho')
+            const { error } = await query
             if (error) throw error
+            setBudgetToDelete(null)
+            setSelectedBudget(null)
             fetchBudgets()
         } catch (e) {
             console.error('Erro ao excluir:', e)
@@ -407,22 +408,13 @@ export default function AllBudgets() {
                                                 </button>
                                             )}
                                             {b.status === 'rascunho' ? (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleEditBudget(b)}
-                                                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition ml-1"
-                                                        title="Tentar Novamente"
-                                                    >
-                                                        <RotateCcw size={20} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteBudget(b)}
-                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition ml-1"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 size={20} />
-                                                    </button>
-                                                </>
+                                                <button
+                                                    onClick={() => handleEditBudget(b)}
+                                                    className="p-2 text-orange-500 hover:text-orange-700 hover:bg-orange-50 rounded-full transition ml-1"
+                                                    title="Continuar Rascunho"
+                                                >
+                                                    <RotateCcw size={20} />
+                                                </button>
                                             ) : (
                                                 <button
                                                     onClick={() => handleEditBudget(b)}
@@ -430,6 +422,15 @@ export default function AllBudgets() {
                                                     title="Editar Orçamento"
                                                 >
                                                     <Pencil size={20} />
+                                                </button>
+                                            )}
+                                            {(isAdmin || b.status === 'rascunho') && (
+                                                <button
+                                                    onClick={() => setBudgetToDelete(b)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition ml-1"
+                                                    title="Excluir"
+                                                >
+                                                    <Trash2 size={20} />
                                                 </button>
                                             )}
                                         </td>
@@ -440,6 +441,42 @@ export default function AllBudgets() {
                     )}
                 </div>
             </div>
+
+            {/* Modal de Confirmação de Exclusão */}
+            {budgetToDelete && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                <Trash2 size={20} className="text-red-600" />
+                            </div>
+                            <h3 className="text-base font-semibold text-gray-900">Confirmar exclusão</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">
+                            Você está prestes a excluir o orçamento de:
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 mb-5">
+                            {budgetToDelete.cliente_empresa || budgetToDelete.cliente_nome || '—'}
+                        </p>
+                        <p className="text-xs text-red-500 mb-5">⚠️ Esta ação não pode ser desfeita.</p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setBudgetToDelete(null)}
+                                className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDeleteBudget}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center gap-2"
+                            >
+                                <Trash2 size={14} />
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal de Detalhes */}
             {selectedBudget && (
@@ -533,6 +570,15 @@ export default function AllBudgets() {
                                     >
                                         <PdfIcon size={16} />
                                         Baixar PDF
+                                    </button>
+                                )}
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => setBudgetToDelete(selectedBudget)}
+                                        className="px-4 py-2.5 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 font-medium transition flex items-center justify-center gap-2"
+                                    >
+                                        <Trash2 size={16} />
+                                        Excluir
                                     </button>
                                 )}
                             </div>
