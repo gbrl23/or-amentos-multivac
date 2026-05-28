@@ -6,13 +6,15 @@ import AuthMultivac from './Auth.jsx'
 import Orcamento from './pages/Orcamento.jsx'
 import Profile from './pages/Profile.jsx'
 import ManageUsers from './pages/ManageUsers.jsx'
-
 import AllBudgets from './pages/AllBudgets.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import UpdatePasswordModal from './components/UpdatePasswordModal.jsx'
 import CatalogManager from './pages/CatalogManager.jsx'
 import CatalogUpload from './pages/CatalogUpload.jsx'
-import DashboardLayout from './components/DashboardLayout.jsx' // [NEW]
+import DashboardLayout from './components/DashboardLayout.jsx'
+import RoleGuard from './components/RoleGuard.jsx'
+import CreditHub from './pages/credit/CreditHub.jsx'
+import MyCreditRequests from './pages/credit/MyCreditRequests.jsx'
 
 // Rota protegida + controle de sessão + timeout de inatividade
 function ProtectedRoute({ children, setPasswordModal }) {
@@ -165,6 +167,24 @@ export default function App() {
 
           {/* Upload de Catálogo */}
           <Route path="/dashboard/catalogo/upload" element={<CatalogUpload />} />
+
+          {/* ── Módulo de Crédito ── */}
+          <Route
+            path="/credito/inicio"
+            element={
+              <RoleGuard roles={['admin', 'comercial', 'financeiro', 'gerente', 'diretoria']}>
+                <CreditHub />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/credito/minhas-solicitacoes"
+            element={
+              <RoleGuard roles={['admin', 'comercial', 'financeiro', 'gerente', 'diretoria']}>
+                <MyCreditRequests />
+              </RoleGuard>
+            }
+          />
         </Route>
 
         {/* fallback: qualquer rota desconhecida volta pro login */}

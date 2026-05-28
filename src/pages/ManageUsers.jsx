@@ -1,7 +1,49 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { UserPlus, Mail, Shield, Loader2, CheckCircle, AlertCircle, Users, Eye, FileText, Pencil, X } from 'lucide-react'
+import { UserPlus, Mail, Shield, Loader2, CheckCircle, AlertCircle, Users, Eye, FileText, Pencil, X, FileCheck, CreditCard } from 'lucide-react'
+
+const MODULES = [
+  {
+    id: 'orcamentos',
+    label: 'Orçamentos',
+    desc: 'Cria e gerencia propostas comerciais para clientes.',
+    icon: FileCheck,
+    defaultRole: 'representative',
+    subroles: null,
+  },
+  {
+    id: 'credito',
+    label: 'Análise de Crédito',
+    desc: 'Solicitações, aprovações e análise de limite de crédito.',
+    icon: CreditCard,
+    defaultRole: null,
+    subroles: [
+      { value: 'comercial',   label: 'Comercial',  desc: 'Abre e acompanha solicitações de crédito.' },
+      { value: 'financeiro',  label: 'Financeiro', desc: 'Analisa crédito, registra limites e valida documentação.' },
+      { value: 'gerente',     label: 'Gerente',    desc: 'Aprova solicitações dentro do seu nível de alçada.' },
+      { value: 'diretoria',   label: 'Diretoria',  desc: 'Aprova qualquer nível de solicitação de crédito.' },
+    ],
+  },
+  {
+    id: 'admin',
+    label: 'Administrador',
+    desc: 'Acesso total ao sistema — gerencia equipe, vê todos os dados.',
+    icon: Shield,
+    defaultRole: 'admin',
+    subroles: null,
+    isAdmin: true,
+  },
+]
+
+const ROLE_META = {
+  representative: { label: 'Representante',  color: 'bg-blue-100 text-blue-700' },
+  comercial:      { label: 'Comercial',       color: 'bg-sky-100 text-sky-700' },
+  financeiro:     { label: 'Financeiro',      color: 'bg-teal-100 text-teal-700' },
+  gerente:        { label: 'Gerente',         color: 'bg-orange-100 text-orange-700' },
+  diretoria:      { label: 'Diretoria',       color: 'bg-purple-100 text-purple-700' },
+  admin:          { label: 'Administrador',   color: 'bg-red-100 text-red-700' },
+}
 
 export default function ManageUsers() {
     const navigate = useNavigate()
@@ -12,7 +54,8 @@ export default function ManageUsers() {
     // Form de convite
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
-    const [role, setRole] = useState('representative')
+    const [selectedModule, setSelectedModule] = useState(null)
+    const [role, setRole] = useState('')
     const [message, setMessage] = useState({ type: null, text: '' })
 
     // Lista de usuários
@@ -89,6 +132,7 @@ export default function ManageUsers() {
     const handleInvite = async (e) => {
         e.preventDefault()
         if (!name || !email) { showMessage('error', 'Preencha nome e email.'); return }
+        if (!role) { showMessage('error', 'Selecione um módulo e cargo para o usuário.'); return }
         setInviting(true)
         setMessage({ type: null, text: '' })
 
@@ -99,7 +143,7 @@ export default function ManageUsers() {
             if (data?.error) throw new Error(data.error)
             if (error) throw error
             showMessage('success', `Convite enviado com sucesso para ${email}!`)
-            setName(''); setEmail(''); setRole('representative')
+            setName(''); setEmail(''); setSelectedModule(null); setRole('')
             fetchUsers()
         } catch (error) {
             console.error(error)
@@ -173,23 +217,85 @@ export default function ManageUsers() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nível de Acesso</label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label className={`border rounded-xl p-4 cursor-pointer transition flex items-start gap-3 ${role === 'representative' ? 'border-[#0071b4] bg-blue-50/50 ring-1 ring-[#0071b4]' : 'border-gray-200 hover:border-gray-300'}`}>
-                                <input type="radio" name="role" value="representative" checked={role === 'representative'} onChange={() => setRole('representative')} className="mt-1" />
-                                <div>
-                                    <div className="font-semibold text-gray-900">Representante</div>
-                                    <div className="text-sm text-gray-500">Pode criar orçamentos e ver seu próprio histórico.</div>
-                                </div>
-                            </label>
-                            <label className={`border rounded-xl p-4 cursor-pointer transition flex items-start gap-3 ${role === 'admin' ? 'border-[#0071b4] bg-blue-50/50 ring-1 ring-[#0071b4]' : 'border-gray-200 hover:border-gray-300'}`}>
-                                <input type="radio" name="role" value="admin" checked={role === 'admin'} onChange={() => setRole('admin')} className="mt-1" />
-                                <div>
-                                    <div className="font-semibold text-gray-900 flex items-center gap-2">Administrador <Shield size={14} className="text-[#0071b4]" /></div>
-                                    <div className="text-sm text-gray-500">Acesso total. Pode ver todos os orçamentos e convidar usuários.</div>
-                                </div>
-                            </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">Módulo de Acesso</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {MODULES.map((mod) => {
+                                const Icon = mod.icon
+                                const isSelected = selectedModule?.id === mod.id
+                                return (
+                                    <button
+                                        key={mod.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedModule(mod)
+                                            if (mod.defaultRole) setRole(mod.defaultRole)
+                                            else setRole('')
+                                        }}
+                                        className={`text-left p-4 rounded-xl border-2 transition flex flex-col gap-2 ${
+                                            isSelected
+                                                ? mod.isAdmin
+                                                    ? 'border-red-400 bg-red-50'
+                                                    : 'border-[#0071b4] bg-blue-50/60'
+                                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                                        }`}
+                                    >
+                                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                            isSelected
+                                                ? mod.isAdmin ? 'bg-red-100 text-red-600' : 'bg-[#0071b4]/15 text-[#0071b4]'
+                                                : 'bg-gray-100 text-gray-500'
+                                        }`}>
+                                            <Icon size={18} />
+                                        </div>
+                                        <div>
+                                            <div className={`font-semibold text-sm ${isSelected ? (mod.isAdmin ? 'text-red-700' : 'text-[#0071b4]') : 'text-gray-800'}`}>
+                                                {mod.label}
+                                            </div>
+                                            <div className="text-xs text-gray-500 leading-snug mt-0.5">{mod.desc}</div>
+                                        </div>
+                                    </button>
+                                )
+                            })}
                         </div>
+
+                        {/* Segundo passo: sub-roles do módulo de crédito */}
+                        {selectedModule?.subroles && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <p className="text-sm font-medium text-gray-700 mb-3">Qual é o cargo desta pessoa?</p>
+                                <div className="space-y-2">
+                                    {selectedModule.subroles.map((sr) => (
+                                        <label
+                                            key={sr.value}
+                                            className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer border transition ${
+                                                role === sr.value
+                                                    ? 'border-[#0071b4] bg-white shadow-sm'
+                                                    : 'border-transparent hover:bg-white hover:border-gray-200'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="subrole"
+                                                value={sr.value}
+                                                checked={role === sr.value}
+                                                onChange={() => setRole(sr.value)}
+                                                className="mt-0.5 accent-[#0071b4]"
+                                            />
+                                            <div>
+                                                <div className="text-sm font-semibold text-gray-900">{sr.label}</div>
+                                                <div className="text-xs text-gray-500">{sr.desc}</div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Aviso admin */}
+                        {selectedModule?.isAdmin && (
+                            <div className="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-50 text-red-700 text-sm border border-red-200 animate-in fade-in duration-200">
+                                <Shield size={15} className="mt-0.5 shrink-0" />
+                                <span>Administradores têm acesso irrestrito. Use com cautela.</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4 border-t border-gray-100 flex justify-end">
@@ -253,9 +359,15 @@ export default function ManageUsers() {
                                         </td>
                                         <td className="p-4 text-gray-600">{u.email}</td>
                                         <td className="p-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {u.role === 'admin' ? 'Admin' : 'Representante'}
-                                            </span>
+                                            {(() => {
+                                                const meta = ROLE_META[u.role]
+                                                return (
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${meta?.color ?? 'bg-gray-100 text-gray-600'}`}>
+                                                        {u.role === 'admin' && <Shield size={11} />}
+                                                        {meta?.label ?? u.role}
+                                                    </span>
+                                                )
+                                            })()}
                                         </td>
                                         <td className="p-4 text-gray-500 capitalize">{formatDateShort(u.created_at)}</td>
                                         <td className="p-4 text-right">

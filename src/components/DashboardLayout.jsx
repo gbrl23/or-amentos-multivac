@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useUserRole } from '../hooks/useUserRole';
 import {
   LayoutDashboard,
   FileText,
@@ -15,7 +16,51 @@ import {
   User,
   Menu,
   X,
+  CreditCard,
+  FilePlus,
+  CheckSquare,
+  BarChart2,
+  List,
 } from 'lucide-react';
+
+const ROLE_LABELS = {
+  admin:          'Administrador',
+  comercial:      'Comercial',
+  financeiro:     'Financeiro',
+  gerente:        'Gerente',
+  diretoria:      'Diretoria',
+  representative: 'Representante',
+};
+
+const CREDIT_ITEMS_BY_ROLE = {
+  admin: [
+    { path: '/credito/inicio',               icon: CreditCard,    label: 'Módulo de Crédito' },
+    { path: '/credito/nova-solicitacao',     icon: FilePlus,      label: 'Nova Solicitação' },
+    { path: '/credito/minhas-solicitacoes',  icon: List,          label: 'Todas Solicitações' },
+    { path: '/credito/aprovar-gerente',      icon: CheckSquare,   label: 'Aprovações' },
+    { path: '/credito/dashboard',            icon: BarChart2,     label: 'Dashboard Crédito' },
+  ],
+  comercial: [
+    { path: '/credito/inicio',               icon: CreditCard,    label: 'Módulo de Crédito' },
+    { path: '/credito/nova-solicitacao',     icon: FilePlus,      label: 'Nova Solicitação' },
+    { path: '/credito/minhas-solicitacoes',  icon: List,          label: 'Minhas Solicitações' },
+  ],
+  financeiro: [
+    { path: '/credito/inicio',               icon: CreditCard,    label: 'Módulo de Crédito' },
+    { path: '/credito/verificar-credito',    icon: CheckSquare,   label: 'Verificar Crédito' },
+    { path: '/credito/dashboard',            icon: BarChart2,     label: 'Dashboard Crédito' },
+  ],
+  gerente: [
+    { path: '/credito/inicio',               icon: CreditCard,    label: 'Módulo de Crédito' },
+    { path: '/credito/aprovar-gerente',      icon: CheckSquare,   label: 'Aprovações (Gerente)' },
+    { path: '/credito/dashboard',            icon: BarChart2,     label: 'Dashboard Crédito' },
+  ],
+  diretoria: [
+    { path: '/credito/inicio',               icon: CreditCard,    label: 'Módulo de Crédito' },
+    { path: '/credito/aprovar-diretoria',    icon: CheckSquare,   label: 'Aprovações (Diretoria)' },
+    { path: '/credito/dashboard',            icon: BarChart2,     label: 'Dashboard Crédito' },
+  ],
+};
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
@@ -23,6 +68,7 @@ export default function DashboardLayout() {
   const [userMetadata, setUserMetadata] = useState(null);
   const [userEmail, setUserEmail] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { role } = useUserRole();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -33,7 +79,6 @@ export default function DashboardLayout() {
     });
   }, []);
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
@@ -43,7 +88,7 @@ export default function DashboardLayout() {
     navigate('/', { replace: true });
   };
 
-  const isAdmin = userMetadata?.role === 'admin';
+  const isAdmin = role === 'admin';
 
   const adminMenuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -60,16 +105,35 @@ export default function DashboardLayout() {
     { path: '/perfil', icon: User, label: 'Meu Perfil' },
   ];
 
-  const finalMenuItems = isAdmin ? adminMenuItems : repMenuItems;
+  // Roles de crédito só têm o menu de crédito (sem orcamentos)
+  const creditOnlyMenuItems = [
+    { path: '/perfil', icon: User, label: 'Meu Perfil' },
+  ];
+
+  const getCoreMenuItems = () => {
+    if (isAdmin) return adminMenuItems;
+    if (['comercial', 'financeiro', 'gerente', 'diretoria'].includes(role)) return creditOnlyMenuItems;
+    return repMenuItems;
+  };
+
+  const coreMenuItems = getCoreMenuItems();
+  const creditMenuItems = CREDIT_ITEMS_BY_ROLE[role] ?? [];
 
   const breadcrumbs = {
-    '/dashboard': 'Visão Geral do Painel',
-    '/dashboard/catalogo': 'Catálogo de Produtos',
-    '/dashboard/catalogo/upload': 'Importação de Dados',
-    '/usuarios': 'Gerenciamento de Equipe',
-    '/orcamentos': isAdmin ? 'Criar Orçamentos' : 'Novo Orçamento',
-    '/propostas': isAdmin ? 'Todos os Orçamentos' : 'Meus Orçamentos',
-    '/perfil': 'Perfil e Preferências',
+    '/dashboard':                     'Visão Geral do Painel',
+    '/dashboard/catalogo':            'Catálogo de Produtos',
+    '/dashboard/catalogo/upload':     'Importação de Dados',
+    '/usuarios':                      'Gerenciamento de Equipe',
+    '/orcamentos':                    isAdmin ? 'Criar Orçamentos' : 'Novo Orçamento',
+    '/propostas':                     isAdmin ? 'Todos os Orçamentos' : 'Meus Orçamentos',
+    '/perfil':                        'Perfil e Preferências',
+    '/credito/inicio':                'Módulo de Crédito',
+    '/credito/nova-solicitacao':      'Nova Solicitação de Crédito',
+    '/credito/minhas-solicitacoes':   'Solicitações de Crédito',
+    '/credito/verificar-credito':     'Verificar Crédito',
+    '/credito/aprovar-gerente':       'Aprovações — Gerente',
+    '/credito/aprovar-diretoria':     'Aprovações — Diretoria',
+    '/credito/dashboard':             'Dashboard de Crédito',
   };
 
   return (
@@ -103,23 +167,54 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-2">
-            {isAdmin ? 'Navegação Principal' : 'Menu'}
-          </div>
-          {finalMenuItems.map((item) => {
-            const isActive = location.pathname === item.path || (location.pathname.startsWith(item.path) && item.path !== '/dashboard' && item.path !== '/orcamentos' && item.path !== '/propostas' && item.path !== '/dashboard/catalogo');
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path + item.label}
-                to={item.path}
-                className={() => `flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition ${isActive ? 'bg-[#0071b4]/10 text-[#0071b4]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
-              >
-                <Icon size={18} className={isActive ? 'text-[#0071b4]' : 'text-gray-400'} />
-                {item.label}
-              </NavLink>
-            );
-          })}
+          {/* Seção principal */}
+          {coreMenuItems.length > 0 && (
+            <>
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">
+                {isAdmin ? 'Principal' : 'Menu'}
+              </div>
+              {coreMenuItems.map((item) => {
+                const isActive = location.pathname === item.path ||
+                  (location.pathname.startsWith(item.path) &&
+                    !['/dashboard', '/orcamentos', '/propostas', '/dashboard/catalogo'].includes(item.path));
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.path + item.label}
+                    to={item.path}
+                    className={() => `flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition ${isActive ? 'bg-[#0071b4]/10 text-[#0071b4]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                  >
+                    <Icon size={18} className={isActive ? 'text-[#0071b4]' : 'text-gray-400'} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </>
+          )}
+
+          {/* Seção de crédito */}
+          {creditMenuItems.length > 0 && (
+            <>
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-6 mb-3 px-2">
+                Crédito
+              </div>
+              {creditMenuItems.map((item) => {
+                const isActive = location.pathname === item.path ||
+                  location.pathname.startsWith(item.path + '/');
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.path + item.label}
+                    to={item.path}
+                    className={() => `flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition ${isActive ? 'bg-[#0071b4]/10 text-[#0071b4]' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
+                  >
+                    <Icon size={18} className={isActive ? 'text-[#0071b4]' : 'text-gray-400'} />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         {/* Profile (Bottom) */}
@@ -133,7 +228,7 @@ export default function DashboardLayout() {
                  <span className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">
                    {userMetadata?.name || userMetadata?.full_name || userEmail?.split('@')[0] || 'Usuário'}
                  </span>
-                 <span className="text-xs text-gray-500 capitalize">{userMetadata?.role || 'Representante'}</span>
+                 <span className="text-xs text-gray-500">{ROLE_LABELS[role] ?? 'Representante'}</span>
                </div>
              </div>
              <Settings size={16} className="text-gray-400 group-hover:text-gray-600" />
