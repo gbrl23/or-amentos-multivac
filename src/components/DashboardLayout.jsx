@@ -142,6 +142,7 @@ export default function DashboardLayout() {
             <LogOut size={16} />
             Encerrar Sessão
           </button>
+          <p className="mt-3 text-center text-[11px] text-gray-300 select-none">v1.3.0</p>
         </div>
       </aside>
 

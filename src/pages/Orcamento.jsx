@@ -17,6 +17,16 @@ function formatarCNPJ(valor) {
   return out
 }
 
+function formatarCPF(valor) {
+  const nums = String(valor || '').replace(/\D/g, '').slice(0, 11)
+  const p1 = nums.slice(0, 3), p2 = nums.slice(3, 6), p3 = nums.slice(6, 9), p4 = nums.slice(9, 11)
+  let out = p1
+  if (p2) out += '.' + p2
+  if (p3) out += '.' + p3
+  if (p4) out += '-' + p4
+  return out
+}
+
 function formatarTelefone(valor) {
   const nums = String(valor || '').replace(/\D/g, '').slice(0, 11)
   const ddd = nums.slice(0, 2), parte1 = nums.slice(2, 7), parte2 = nums.slice(7, 11)
@@ -93,8 +103,9 @@ export default function OrcamentoMultivac() {
   const [representante, setRepresentante] = useState('')
   const [representanteEmail, setRepresentanteEmail] = useState('')
   const [cliente, setCliente] = useState({
-    nome: '', empresa: '', cnpj: '', inscricaoEstadual: '', isentoIE: false,
-    email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final'
+    nome: '', empresa: '', cnpj: '', cpf: '', inscricaoEstadual: '', isentoIE: false,
+    email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final',
+    tipoPessoa: 'juridica'
   })
 
   const [itens, setItens] = useState([
@@ -131,6 +142,10 @@ export default function OrcamentoMultivac() {
   const [buscandoCliente, setBuscandoCliente] = useState(false)
   const [statusBuscaCliente, setStatusBuscaCliente] = useState(null)
 
+  // Rascunho
+  const [currentDraftId, setCurrentDraftId] = useState(null)
+  const [salvandoRascunho, setSalvandoRascunho] = useState(false)
+
   // Popover de confirmação/sucesso
   const [showConfirm, setShowConfirm] = useState(false)
   const [enviando, setEnviando] = useState(false)
@@ -151,7 +166,7 @@ export default function OrcamentoMultivac() {
 
   // Refs
   const refs = {
-    cnpj: useRef(null), nome: useRef(null), empresa: useRef(null), email: useRef(null),
+    cnpj: useRef(null), cpf: useRef(null), nome: useRef(null), empresa: useRef(null), email: useRef(null),
     telefone: useRef(null), cidade: useRef(null), estado: useRef(null), inscricaoEstadual: useRef(null),
     tipoVenda: useRef(null), formaPagamento: useRef(null), prazoEntrega: useRef(null),
     frete: useRef(null), transportadora: useRef(null), icms: useRef(null), desconto: useRef(null),
@@ -227,9 +242,11 @@ export default function OrcamentoMultivac() {
   // Resetar formulário
   const resetForm = () => {
     setCliente({
-      nome: '', empresa: '', cnpj: '', inscricaoEstadual: '', isentoIE: false,
-      email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final'
+      nome: '', empresa: '', cnpj: '', cpf: '', inscricaoEstadual: '', isentoIE: false,
+      email: '', emailCobranca: '', telefone: '', cidade: '', estado: '', tipoVenda: 'consumidor-final',
+      tipoPessoa: 'juridica'
     })
+    setCurrentDraftId(null)
     setItens([{ id: Date.now(), codigo: '', nome: '', quantidade: 1, precoUnitario: 0, multiplo: 1, unidade: 'UN', ipi: 0, desconto: 0 }])
     setComercial({
       validade: calcularValidadePadrao(),
@@ -251,6 +268,61 @@ export default function OrcamentoMultivac() {
     setEnviando(false)
   }
 
+  const salvarRascunho = async () => {
+    setSalvandoRascunho(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { showToast('Sessão expirada. Faça login novamente.', 'error'); return }
+
+      let obsAdicionais = ''
+      if (comercial.formaPagamento === 'Outros' && comercial.formaPagamentoDetalhe) obsAdicionais += `\nForma de Pagamento: ${comercial.formaPagamentoDetalhe}`
+      if (comercial.frete === 'Transportadora' && comercial.transportadora) obsAdicionais += `\nTransportadora: ${comercial.transportadora}`
+      else if (comercial.frete === 'Outros' && comercial.transportadora) obsAdicionais += `\nFrete (Detalhes): ${comercial.transportadora}`
+
+      const payload = {
+        isEdited: editMode, version: version || 1,
+        representante, representanteEmail, cliente,
+        itens: itens.map(i => ({
+          codigo: i.codigo, nome: i.nome, quantidade: n(i.quantidade, 1),
+          precoUnitario: n(i.precoUnitario, 0), multiplo: n(i.multiplo, 1),
+          unidade: i.unidade ?? i.un ?? 'UN', ipi: n(i.ipi, 0), desconto: n(i.desconto, 0),
+          subtotal: itemSubtotal(i), ipiValor: itemIPI(i),
+          descontoValor: itemDesconto(i), subtotalLiquido: itemSubtotal(i) - itemDesconto(i),
+        })),
+        comercial: { ...comercial, observacoes: (comercial.observacoes || '') + obsAdicionais, icms: n(icms, 0), desconto: n(desconto, 0), descontoPorItem },
+        icms: n(icms, 0), desconto: n(desconto, 0), descontoPorItem,
+        valores: { subtotal: calcularSubtotal(), desconto: calcularDesconto(), icms: calcularICMS(), ipi: calcularIPITotal(), total: calcularTotal() }
+      }
+
+      const docField = cliente.tipoPessoa === 'fisica' ? cliente.cpf : cliente.cnpj
+      const rascunhoData = {
+        user_id: user.id,
+        cliente_nome: cliente.nome || '',
+        cliente_empresa: cliente.empresa || cliente.nome || '',
+        cliente_cnpj: docField || '',
+        valor_total: calcularTotal(),
+        status: 'rascunho',
+        payload,
+      }
+
+      const draftIdToUse = editMode ? budgetToUpdate?.id : currentDraftId
+      if (draftIdToUse) {
+        const { error } = await supabase.from('orcamentos').update(rascunhoData).eq('id', draftIdToUse)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase.from('orcamentos').insert(rascunhoData).select()
+        if (error) throw error
+        if (data?.[0]?.id) setCurrentDraftId(data[0].id)
+      }
+      showToast('Rascunho salvo com sucesso!', 'success')
+    } catch (e) {
+      console.error(e)
+      showToast('Erro ao salvar rascunho: ' + (e instanceof Error ? e.message : String(e)), 'error')
+    } finally {
+      setSalvandoRascunho(false)
+    }
+  }
+
   const fecharPopover = () => {
     if (respostaN8n) {
       resetForm()
@@ -263,7 +335,7 @@ export default function OrcamentoMultivac() {
 
   // ---------- Gateway n8n ----------
   const callGateway = async (action, extraPayload = {}, { noPreflight = true } = {}) => {
-    const body = { action, ...extraPayload }
+    const body = { action, _apiKey: 'mk-proposta-2026-xK9mP', ...extraPayload }
     const headers = noPreflight
       ? { 'Content-Type': 'text/plain' }
       : { 'Content-Type': 'application/json' }
@@ -326,7 +398,7 @@ export default function OrcamentoMultivac() {
       setEditMode(true)
       setBudgetToUpdate(budgetData)
       setPreviousStatus(budgetData.status)
-      if (payload.cliente) setCliente(payload.cliente)
+      if (payload.cliente) setCliente({ tipoPessoa: 'juridica', cpf: '', ...payload.cliente })
       if (payload.version) setVersion(payload.version)
       if (payload.itens) {
         setItens(payload.itens.map(i => ({
@@ -386,12 +458,54 @@ export default function OrcamentoMultivac() {
   }
 
   useEffect(() => {
+    if (cliente.tipoPessoa === 'fisica') return
     const limpo = onlyDigits(cliente.cnpj)
     if (limpo.length !== 14) return
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => buscarClientePorCNPJ(limpo), 300)
     return () => clearTimeout(debounceRef.current)
-  }, [cliente.cnpj])
+  }, [cliente.cnpj, cliente.tipoPessoa])
+
+  const buscarClientePorCPF = async (cpfDigitado) => {
+    const limpo = String(cpfDigitado || '').replace(/\D/g, '').slice(0, 11)
+    if (limpo.length < 11) return
+    try {
+      setBuscandoCliente(true); setStatusBuscaCliente(null)
+      const { data, error } = await supabase.from('clientes').select('*').eq('cpf_normalizado', limpo).limit(1)
+      if (error) throw error
+      const row = (Array.isArray(data) && data[0]) || null
+      if (row) {
+        const nome = row.nome_contato ?? row.nome ?? row.contato ?? ''
+        const telefone = row.telefone ?? row.fone ?? ''
+        const cidade = row.cidade ?? ''
+        const uf = row.uf ?? row.UF ?? row.estado ?? ''
+        const email = row.email ?? row['Email'] ?? row['E-mail'] ?? ''
+        setCliente((p) => ({
+          ...p, cpf: formatarCPF(limpo),
+          nome: nome || p.nome, email: email || p.email,
+          telefone: telefone ? formatarTelefone(telefone) : p.telefone,
+          cidade: cidade || p.cidade, estado: uf || p.estado,
+          emailCobranca: email || p.emailCobranca || '',
+        }))
+        setStatusBuscaCliente('encontrado')
+      } else { setStatusBuscaCliente('nao-encontrado') }
+    } catch (e) {
+      console.error('Erro ao buscar cliente por CPF:', e)
+      setStatusBuscaCliente('nao-encontrado')
+    } finally {
+      setBuscandoCliente(false)
+      setTimeout(() => setStatusBuscaCliente(null), 3000)
+    }
+  }
+
+  useEffect(() => {
+    if (cliente.tipoPessoa !== 'fisica') return
+    const limpo = onlyDigits(cliente.cpf)
+    if (limpo.length !== 11) return
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => buscarClientePorCPF(limpo), 300)
+    return () => clearTimeout(debounceRef.current)
+  }, [cliente.cpf, cliente.tipoPessoa])
 
   // ---- Produtos/itens ----
   const filtrarProdutosPorBusca = (itemId) => {
@@ -473,15 +587,20 @@ export default function OrcamentoMultivac() {
   // ---- Validação ----
   const validateForm = () => {
     const errs = { cliente: {}, comercial: {}, impostos: {}, itens: {} }
-    if (isEmpty(cliente.cnpj) || onlyDigits(cliente.cnpj).length !== 14) errs.cliente.cnpj = true
+    const isPF = cliente.tipoPessoa === 'fisica'
+    if (isPF) {
+      if (isEmpty(cliente.cpf) || onlyDigits(cliente.cpf).length !== 11) errs.cliente.cpf = true
+    } else {
+      if (isEmpty(cliente.cnpj) || onlyDigits(cliente.cnpj).length !== 14) errs.cliente.cnpj = true
+      if (isEmpty(cliente.empresa)) errs.cliente.empresa = true
+      if (!cliente.isentoIE && isEmpty(cliente.inscricaoEstadual)) errs.cliente.inscricaoEstadual = true
+    }
     if (isEmpty(cliente.nome)) errs.cliente.nome = true
-    if (isEmpty(cliente.empresa)) errs.cliente.empresa = true
     if (!isValidEmail(cliente.email)) errs.cliente.email = true
     if (!isValidEmail(cliente.emailCobranca)) errs.cliente.emailCobranca = true
     if (isEmpty(cliente.telefone) || onlyDigits(cliente.telefone).length < 10) errs.cliente.telefone = true
     if (isEmpty(cliente.cidade)) errs.cliente.cidade = true
     if (isEmpty(cliente.estado)) errs.cliente.estado = true
-    if (!cliente.isentoIE && isEmpty(cliente.inscricaoEstadual)) errs.cliente.inscricaoEstadual = true
     if (isEmpty(cliente.tipoVenda)) errs.cliente.tipoVenda = true
     if (isEmpty(comercial.formaPagamento)) errs.comercial.formaPagamento = true
     if (comercial.formaPagamento === 'Outros' && isEmpty(comercial.formaPagamentoDetalhe)) errs.comercial.formaPagamentoDetalhe = true
@@ -502,7 +621,7 @@ export default function OrcamentoMultivac() {
     if (hasErrors) {
       showToast('Preencha os campos obrigatórios destacados antes de gerar o orçamento.', 'error')
       const order = [
-        ['cliente', 'cnpj', refs.cnpj], ['cliente', 'nome', refs.nome], ['cliente', 'empresa', refs.empresa],
+        ['cliente', 'cnpj', refs.cnpj], ['cliente', 'cpf', refs.cpf], ['cliente', 'nome', refs.nome], ['cliente', 'empresa', refs.empresa],
         ['cliente', 'email', refs.email], ['cliente', 'emailCobranca', refs.emailCobranca],
         ['cliente', 'telefone', refs.telefone], ['cliente', 'cidade', refs.cidade],
         ['cliente', 'estado', refs.estado], ['cliente', 'inscricaoEstadual', refs.inscricaoEstadual],
@@ -572,18 +691,22 @@ export default function OrcamentoMultivac() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         let savedData, errSupabase
-        if (editMode && previousStatus === 'erro' && budgetToUpdate?.id) {
-          newBudgetId = budgetToUpdate.id
+        const docField = cliente.tipoPessoa === 'fisica' ? cliente.cpf : cliente.cnpj
+        const existingId = editMode
+          ? (['erro', 'rascunho'].includes(previousStatus) ? budgetToUpdate?.id : null)
+          : currentDraftId
+        if (existingId) {
+          newBudgetId = existingId
           const { data, error } = await supabase.from('orcamentos').update({
-            user_id: user.id, cliente_nome: cliente.nome, cliente_empresa: cliente.empresa,
-            cliente_cnpj: cliente.cnpj, valor_total: payload.valores.total,
+            user_id: user.id, cliente_nome: cliente.nome, cliente_empresa: cliente.empresa || cliente.nome,
+            cliente_cnpj: docField, valor_total: payload.valores.total,
             status: 'enviado', payload: payload, created_at: new Date().toISOString()
           }).eq('id', newBudgetId).select()
           savedData = data; errSupabase = error
         } else {
           const { data, error } = await supabase.from('orcamentos').insert({
-            user_id: user.id, cliente_nome: cliente.nome, cliente_empresa: cliente.empresa,
-            cliente_cnpj: cliente.cnpj, valor_total: payload.valores.total,
+            user_id: user.id, cliente_nome: cliente.nome, cliente_empresa: cliente.empresa || cliente.nome,
+            cliente_cnpj: docField, valor_total: payload.valores.total,
             status: 'enviado', payload: payload
           }).select()
           savedData = data; errSupabase = error
@@ -663,19 +786,53 @@ export default function OrcamentoMultivac() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
         <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Dados do Cliente</h2>
 
+        {/* Toggle PJ / PF */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
-          <div className="relative">
-            <input ref={refs.cnpj} type="text" placeholder="Digite o CNPJ" value={cliente.cnpj}
-              onChange={(e) => { setCliente({ ...cliente, cnpj: formatarCNPJ(e.target.value) }); setFieldError('cliente', 'cnpj', false) }}
-              onBlur={(e) => buscarClientePorCNPJ(e.target.value)}
-              className={`${inputClass('cliente', 'cnpj')} pr-10`} aria-invalid={hasErr('cliente', 'cnpj') || undefined} />
-            {buscandoCliente && <Loader2 className="absolute right-3 top-3 animate-spin text-[#0071b4]" size={18} />}
-            {statusBuscaCliente === 'encontrado' && <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />}
-            {statusBuscaCliente === 'nao-encontrado' && <AlertCircle className="absolute right-3 top-3 text-yellow-500" size={18} />}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Pessoa</label>
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+            <button type="button"
+              onClick={() => setCliente((p) => ({ ...p, tipoPessoa: 'juridica', cpf: '' }))}
+              className={`px-4 py-2 text-sm font-medium transition ${cliente.tipoPessoa !== 'fisica' ? 'bg-[#0071b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              Pessoa Jurídica (CNPJ)
+            </button>
+            <button type="button"
+              onClick={() => setCliente((p) => ({ ...p, tipoPessoa: 'fisica', cnpj: '', inscricaoEstadual: '', isentoIE: false }))}
+              className={`px-4 py-2 text-sm font-medium transition border-l border-gray-200 ${cliente.tipoPessoa === 'fisica' ? 'bg-[#0071b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+              Pessoa Física (CPF)
+            </button>
           </div>
-          {hasErr('cliente', 'cnpj') && <p className="text-red-500 text-xs mt-1">Informe um CNPJ válido (14 dígitos).</p>}
         </div>
+
+        {/* Campo Documento */}
+        {cliente.tipoPessoa !== 'fisica' ? (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
+            <div className="relative">
+              <input ref={refs.cnpj} type="text" placeholder="Digite o CNPJ" value={cliente.cnpj}
+                onChange={(e) => { setCliente({ ...cliente, cnpj: formatarCNPJ(e.target.value) }); setFieldError('cliente', 'cnpj', false) }}
+                onBlur={(e) => buscarClientePorCNPJ(e.target.value)}
+                className={`${inputClass('cliente', 'cnpj')} pr-10`} aria-invalid={hasErr('cliente', 'cnpj') || undefined} />
+              {buscandoCliente && <Loader2 className="absolute right-3 top-3 animate-spin text-[#0071b4]" size={18} />}
+              {statusBuscaCliente === 'encontrado' && <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />}
+              {statusBuscaCliente === 'nao-encontrado' && <AlertCircle className="absolute right-3 top-3 text-yellow-500" size={18} />}
+            </div>
+            {hasErr('cliente', 'cnpj') && <p className="text-red-500 text-xs mt-1">Informe um CNPJ válido (14 dígitos).</p>}
+          </div>
+        ) : (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
+            <div className="relative">
+              <input ref={refs.cpf} type="text" placeholder="Digite o CPF" value={cliente.cpf}
+                onChange={(e) => { setCliente({ ...cliente, cpf: formatarCPF(e.target.value) }); setFieldError('cliente', 'cpf', false) }}
+                onBlur={(e) => buscarClientePorCPF(e.target.value)}
+                className={`${inputClass('cliente', 'cpf')} pr-10`} aria-invalid={hasErr('cliente', 'cpf') || undefined} />
+              {buscandoCliente && <Loader2 className="absolute right-3 top-3 animate-spin text-[#0071b4]" size={18} />}
+              {statusBuscaCliente === 'encontrado' && <CheckCircle className="absolute right-3 top-3 text-green-500" size={18} />}
+              {statusBuscaCliente === 'nao-encontrado' && <AlertCircle className="absolute right-3 top-3 text-yellow-500" size={18} />}
+            </div>
+            {hasErr('cliente', 'cpf') && <p className="text-red-500 text-xs mt-1">Informe um CPF válido (11 dígitos).</p>}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -685,10 +842,14 @@ export default function OrcamentoMultivac() {
               className={inputClass('cliente', 'nome')} aria-invalid={hasErr('cliente', 'nome') || undefined} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Razão Social / Empresa *</label>
-            <input ref={refs.empresa} type="text" placeholder="Razão social" value={cliente.empresa}
-              onChange={(e) => { setCliente({ ...cliente, empresa: e.target.value }); setFieldError('cliente', 'empresa', !e.target.value.trim()) }}
-              className={inputClass('cliente', 'empresa')} aria-invalid={hasErr('cliente', 'empresa') || undefined} />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {cliente.tipoPessoa === 'fisica' ? 'Empresa (opcional)' : 'Razão Social / Empresa *'}
+            </label>
+            <input ref={refs.empresa} type="text"
+              placeholder={cliente.tipoPessoa === 'fisica' ? 'Empresa (se houver)' : 'Razão social'} value={cliente.empresa}
+              onChange={(e) => { setCliente({ ...cliente, empresa: e.target.value }); if (cliente.tipoPessoa !== 'fisica') setFieldError('cliente', 'empresa', !e.target.value.trim()) }}
+              className={inputClass('cliente', 'empresa')}
+              aria-invalid={(cliente.tipoPessoa !== 'fisica' && hasErr('cliente', 'empresa')) || undefined} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
@@ -731,19 +892,23 @@ export default function OrcamentoMultivac() {
               className="w-4 h-4 accent-[#0071b4] rounded" />
             <span className="text-sm text-gray-600">Mesmo do contato</span>
           </label>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{cliente.isentoIE ? 'Inscrição Estadual (ISENTO)' : 'Inscrição Estadual *'}</label>
-            <input ref={refs.inscricaoEstadual} type="text" placeholder={cliente.isentoIE ? 'ISENTO' : 'Inscrição Estadual'} value={cliente.inscricaoEstadual}
-              onChange={(e) => { setCliente({ ...cliente, inscricaoEstadual: e.target.value }); if (!cliente.isentoIE) setFieldError('cliente', 'inscricaoEstadual', !e.target.value.trim()) }}
-              disabled={cliente.isentoIE} className={inputClass('cliente', 'inscricaoEstadual') + ' disabled:bg-gray-50 disabled:text-gray-400'}
-              aria-invalid={(!cliente.isentoIE && hasErr('cliente', 'inscricaoEstadual')) || undefined} />
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={cliente.isentoIE}
-              onChange={(e) => { const isento = e.target.checked; setCliente({ ...cliente, isentoIE: isento, inscricaoEstadual: isento ? 'ISENTO' : '' }); if (isento) setFieldError('cliente', 'inscricaoEstadual', false) }}
-              className="w-4 h-4 accent-[#0071b4] rounded" />
-            <span className="text-sm text-gray-600">Isento de IE</span>
-          </label>
+          {cliente.tipoPessoa !== 'fisica' && (
+            <>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">{cliente.isentoIE ? 'Inscrição Estadual (ISENTO)' : 'Inscrição Estadual *'}</label>
+                <input ref={refs.inscricaoEstadual} type="text" placeholder={cliente.isentoIE ? 'ISENTO' : 'Inscrição Estadual'} value={cliente.inscricaoEstadual}
+                  onChange={(e) => { setCliente({ ...cliente, inscricaoEstadual: e.target.value }); if (!cliente.isentoIE) setFieldError('cliente', 'inscricaoEstadual', !e.target.value.trim()) }}
+                  disabled={cliente.isentoIE} className={inputClass('cliente', 'inscricaoEstadual') + ' disabled:bg-gray-50 disabled:text-gray-400'}
+                  aria-invalid={(!cliente.isentoIE && hasErr('cliente', 'inscricaoEstadual')) || undefined} />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={cliente.isentoIE}
+                  onChange={(e) => { const isento = e.target.checked; setCliente({ ...cliente, isentoIE: isento, inscricaoEstadual: isento ? 'ISENTO' : '' }); if (isento) setFieldError('cliente', 'inscricaoEstadual', false) }}
+                  className="w-4 h-4 accent-[#0071b4] rounded" />
+                <span className="text-sm text-gray-600">Isento de IE</span>
+              </label>
+            </>
+          )}
         </div>
 
         <div className="mt-5">
@@ -1005,11 +1170,18 @@ export default function OrcamentoMultivac() {
         </div>
       </div>
 
-      {/* Botão Gerar */}
-      <div className="flex justify-end pb-4">
-        <button ref={gerarBtnRef} onClick={confirmarGerarOrcamento} disabled={enviando}
+      {/* Botões de Ação */}
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pb-4">
+        {(!editMode || previousStatus === 'rascunho') && (
+          <button onClick={salvarRascunho} disabled={salvandoRascunho || enviando}
+            className="w-full sm:w-auto bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl text-base font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            {salvandoRascunho && <Loader2 className="animate-spin" size={18} />}
+            {salvandoRascunho ? 'Salvando...' : 'Salvar Rascunho'}
+          </button>
+        )}
+        <button ref={gerarBtnRef} onClick={confirmarGerarOrcamento} disabled={enviando || salvandoRascunho}
           className="w-full sm:w-auto bg-[#0071b4] hover:bg-[#005a91] text-white px-8 py-3 rounded-xl text-base font-semibold transition shadow-lg shadow-blue-500/20 ring-1 ring-[#005a91]/50 disabled:opacity-50 disabled:cursor-not-allowed">
-          {editMode ? (previousStatus === 'rascunho' ? 'Tentar Novamente' : 'Salvar Alterações') : 'Gerar Orçamento'}
+          {editMode ? (previousStatus === 'rascunho' ? 'Finalizar e Enviar' : 'Salvar Alterações') : 'Gerar Orçamento'}
         </button>
       </div>
 
@@ -1034,7 +1206,7 @@ export default function OrcamentoMultivac() {
                   <button onClick={fecharPopover} disabled={enviando} className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50">Cancelar</button>
                   <button onClick={gerarOrcamento} disabled={enviando} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#0071b4] hover:bg-[#005a91] shadow-sm disabled:opacity-50 flex items-center gap-2 transition">
                     {enviando && <Loader2 className="animate-spin" size={16} />}
-                    {enviando ? 'Enviando...' : (editMode ? (previousStatus === 'rascunho' ? 'Confirmar Reenvio' : 'Confirmar Edição') : 'Confirmar envio')}
+                    {enviando ? 'Enviando...' : (editMode && previousStatus !== 'rascunho' ? 'Confirmar Edição' : 'Confirmar envio')}
                   </button>
                 </div>
               </div>

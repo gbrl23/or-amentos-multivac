@@ -286,10 +286,10 @@ export default function AllBudgets() {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">CNPJ</label>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">CNPJ / CPF</label>
                         <input
                             type="text"
-                            placeholder="Buscar CNPJ..."
+                            placeholder="Buscar documento..."
                             value={filterCnpj}
                             onChange={(e) => setFilterCnpj(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-[#0071b4] outline-none"
